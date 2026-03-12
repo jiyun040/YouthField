@@ -5,22 +5,22 @@ class YouthFieldTextStyle {
   /// title
   static const TextStyle title1 = TextStyle(
     fontSize: 40,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
   );
 
   static const TextStyle title2 = TextStyle(
     fontSize: 34,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
   );
 
   static const TextStyle title3 = TextStyle(
     fontSize: 32,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
   );
 
   static const TextStyle title4 = TextStyle(
     fontSize: 28,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
   );
 
   /// body
@@ -36,12 +36,12 @@ class YouthFieldTextStyle {
 
   static const TextStyle body3 = TextStyle(
     fontSize: 24,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
   );
 
   static const TextStyle body4 = TextStyle(
     fontSize: 22,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
   );
 
   /// etc
@@ -57,7 +57,7 @@ class YouthFieldTextStyle {
 
   static const TextStyle smallButton = TextStyle(
     fontSize: 14,
-    fontWeight: FontWeight.w600,
+    fontWeight: FontWeight.w700,
   );
 }
 

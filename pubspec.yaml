@@ -25,7 +25,7 @@ flutter:
     - family: LINESeedKR
       fonts:
         - asset: assets/fonts/LINESeedKR-Bd.ttf
-          weight: 600
+          weight: 700
         - asset: assets/fonts/LINESeedKR-Rg.ttf
           weight: 400
 
