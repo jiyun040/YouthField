@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:youthfield/constants/color.dart';
+import 'package:youthfield/core/constants/color.dart';
 
 class YouthFieldTextStyle {
   /// title
