@@ -7,12 +7,14 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
   final bool isLoggedIn;
   final VoidCallback onLogin;
   final VoidCallback onLogout;
+  final VoidCallback? onLogoTap;
 
   const YFAppBar({
     super.key,
     required this.isLoggedIn,
     required this.onLogin,
     required this.onLogout,
+    this.onLogoTap,
   });
 
   @override
@@ -26,7 +28,14 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Row(
         children: [
-          SvgPicture.asset('assets/svg/logo.svg', height: 28),
+          GestureDetector(
+            onTap: onLogoTap ??
+                () => Navigator.popUntil(context, (route) => route.isFirst),
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: SvgPicture.asset('assets/svg/logo.svg', height: 28),
+            ),
+          ),
           const Spacer(),
           if (!isLoggedIn)
             TextButton(
