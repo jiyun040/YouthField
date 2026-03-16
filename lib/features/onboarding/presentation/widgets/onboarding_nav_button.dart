@@ -18,8 +18,8 @@ class OnboardingNavButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (isLastPage) {
-      return GestureDetector(
-        onTap: onStart,
+      return TextButton(
+        onPressed: onStart,
         child: Text(
           '시작하기',
           style: YouthFieldTextStyle.title3.copyWith(color: YouthFieldColor.gold),

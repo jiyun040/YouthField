@@ -21,6 +21,8 @@ class AuthTextField extends StatelessWidget {
     return TextField(
       controller: controller,
       obscureText: obscureText,
+      enableSuggestions: !obscureText,
+      autocorrect: !obscureText,
       style: YouthFieldTextStyle.body4.copyWith(
         color: YouthFieldColor.black800,
       ),

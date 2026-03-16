@@ -29,8 +29,8 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
           SvgPicture.asset('assets/svg/logo.svg', height: 28),
           const Spacer(),
           if (!isLoggedIn)
-            GestureDetector(
-              onTap: onLogin,
+            TextButton(
+              onPressed: onLogin,
               child: Text(
                 '로그인',
                 style: YouthFieldTextStyle.body4.copyWith(
@@ -39,8 +39,8 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             )
           else
-            GestureDetector(
-              onTap: onLogout,
+            TextButton(
+              onPressed: onLogout,
               child: Text(
                 '로그아웃',
                 style: YouthFieldTextStyle.body4.copyWith(

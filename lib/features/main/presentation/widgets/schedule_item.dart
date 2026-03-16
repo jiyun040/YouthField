@@ -36,6 +36,7 @@ class ScheduleItem extends StatelessWidget {
           color: YouthFieldColor.black800,
         ),
         overflow: TextOverflow.ellipsis,
+        maxLines: 1,
       ),
     );
   }

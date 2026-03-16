@@ -28,10 +28,16 @@ class YFTitleBar extends StatelessWidget implements PreferredSizeWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
-          Text(
-            title,
-            style: YouthFieldTextStyle.body3.copyWith(
-              color: YouthFieldColor.black800,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 56),
+            child: Text(
+              title,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              textAlign: TextAlign.center,
+              style: YouthFieldTextStyle.body3.copyWith(
+                color: YouthFieldColor.black800,
+              ),
             ),
           ),
 
