@@ -29,40 +29,34 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
       child: Row(
         children: [
           GestureDetector(
-            onTap: onLogoTap ??
-                () => Navigator.popUntil(context, (route) => route.isFirst),
+            onTap:
+            onLogoTap ??
+                    () => Navigator.popUntil(context, (route) => route.isFirst),
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
-              child: SvgPicture.asset('assets/svg/logo.svg', height: 28),
+              child: SvgPicture.asset('assets/svg/logo.svg'),
             ),
           ),
           const Spacer(),
-          if (!isLoggedIn)
-            TextButton(
-              onPressed: onLogin,
-              child: Text(
-                '로그인',
-                style: YouthFieldTextStyle.body4.copyWith(
-                  color: YouthFieldColor.black800,
-                ),
-              ),
-            )
-          else
-            TextButton(
-              onPressed: onLogout,
-              child: Text(
-                '로그아웃',
-                style: YouthFieldTextStyle.body4.copyWith(
-                  color: YouthFieldColor.black800,
-                ),
+          TextButton(
+            onPressed: onLogin,
+            child: Text(
+              '로그인',
+              style: YouthFieldTextStyle.smallButton.copyWith(
+                color: YouthFieldColor.black800,
               ),
             ),
-          const SizedBox(width: 24),
-          const Icon(
-            Icons.sports_soccer,
-            color: YouthFieldColor.black800,
-            size: 28,
           ),
+          TextButton(
+            onPressed: onLogout,
+            child: Text(
+              '로그아웃',
+              style: YouthFieldTextStyle.smallButton.copyWith(
+                color: YouthFieldColor.black800,
+              ),
+            ),
+          ),
+          const Icon(Icons.sports_soccer, color: YouthFieldColor.blue700),
         ],
       ),
     );
