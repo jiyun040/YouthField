@@ -24,14 +24,14 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 64,
-      color: YouthFieldColor.white,
+      color: YouthFieldColor.background,
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Row(
         children: [
           GestureDetector(
             onTap:
-            onLogoTap ??
-                    () => Navigator.popUntil(context, (route) => route.isFirst),
+                onLogoTap ??
+                () => Navigator.popUntil(context, (route) => route.isFirst),
             child: MouseRegion(
               cursor: SystemMouseCursors.click,
               child: SvgPicture.asset('assets/svg/logo.svg'),

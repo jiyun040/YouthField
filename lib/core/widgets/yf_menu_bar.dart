@@ -17,7 +17,7 @@ class YFMenuBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: YouthFieldColor.white,
+      color: YouthFieldColor.background,
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: List.generate(tabs.length, (i) {
