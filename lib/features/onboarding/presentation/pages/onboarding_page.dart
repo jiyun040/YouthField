@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/main/presentation/pages/main_page.dart';
@@ -43,12 +42,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
       body: Stack(
         fit: StackFit.expand,
         children: [
-          SvgPicture.asset(
-            'assets/svg/background.svg',
+          Image.asset(
+            'assets/svg/background.png',
             fit: BoxFit.cover,
-            errorBuilder: (_, __, ___) => Container(
-              color: YouthFieldColor.blue700,
-            ),
+            errorBuilder: (_, __, ___) =>
+                Container(color: YouthFieldColor.blue700),
           ),
 
           Container(
@@ -56,10 +54,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
               gradient: LinearGradient(
                 begin: Alignment.bottomCenter,
                 end: Alignment.topCenter,
-                colors: [
-                  Color(0xCC00255E),
-                  Color(0x6687B6FF),
-                ],
+                colors: [Color(0xCC00255E), Color(0x6687B6FF)],
               ),
             ),
           ),
@@ -88,7 +83,9 @@ class _OnboardingPageState extends State<OnboardingPage> {
                     child: Text(
                       _titles[_currentPage],
                       key: ValueKey(_currentPage),
-                      style: YouthFieldTextStyle.body1.copyWith(color: YouthFieldColor.white),
+                      style: YouthFieldTextStyle.body1.copyWith(
+                        color: YouthFieldColor.white,
+                      ),
                       textAlign: TextAlign.center,
                     ),
                   ),
