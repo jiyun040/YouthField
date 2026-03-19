@@ -23,12 +23,12 @@ class AuthTextField extends StatelessWidget {
       obscureText: obscureText,
       enableSuggestions: !obscureText,
       autocorrect: !obscureText,
-      style: YouthFieldTextStyle.body4.copyWith(
+      style: YouthFieldTextStyle.placeholder.copyWith(
         color: YouthFieldColor.black800,
       ),
       decoration: InputDecoration(
         hintText: hint,
-        hintStyle: YouthFieldTextStyle.body4.copyWith(
+        hintStyle: YouthFieldTextStyle.placeholder.copyWith(
           color: YouthFieldColor.black500,
         ),
         suffixIcon: suffix,
@@ -46,7 +46,7 @@ class AuthTextField extends StatelessWidget {
           borderRadius: BorderRadius.circular(8),
           borderSide: BorderSide.none,
         ),
-        contentPadding: const EdgeInsets.all(20),
+        contentPadding: const EdgeInsets.all(16),
       ),
     );
   }
