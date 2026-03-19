@@ -40,13 +40,13 @@ class YouthFieldTextStyle {
   );
 
   static const TextStyle body4 = TextStyle(
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: FontWeight.w700,
   );
 
   /// etc
   static const TextStyle placeholder = TextStyle(
-    fontSize: 24,
+    fontSize: 12,
     fontWeight: FontWeight.w400,
   );
 
