@@ -494,10 +494,12 @@ class _MainPageState extends State<MainPage> {
               ),
               if (s.youtubeUrl != null)
                 GestureDetector(
-                  onTap: () => launchUrl(
-                    Uri.parse(s.youtubeUrl!),
-                    mode: LaunchMode.externalApplication,
-                  ),
+                  onTap: () async {
+                    final url = Uri.tryParse(s.youtubeUel!);
+                    if (url != null && await canLaunchUrl(url)) {
+                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                    }
+                  },
                   child: SvgPicture.asset(
                     'assets/svg/youtube_logo.svg',
                     width: 32,
