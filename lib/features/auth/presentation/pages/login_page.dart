@@ -1,10 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
-import '../widgets/auth_button.dart';
-import '../widgets/auth_text_field.dart';
-import 'signup_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -14,15 +12,35 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _emailController = TextEditingController();
-  final _passwordController = TextEditingController();
-  bool _passwordVisible = false;
+  bool _isLoading = false;
 
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _passwordController.dispose();
-    super.dispose();
+  final _googleSignIn = GoogleSignIn(
+    // TODO: Google Cloud Console에서 발급받은 Client ID로 교체하세요.
+    clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
+    scopes: ['email', 'profile'],
+  );
+
+  Future<void> _signInWithGoogle() async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+
+    try {
+      final account = await _googleSignIn.signIn();
+      if (account != null && mounted) {
+        Navigator.pop(context, true);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('로그인에 실패하였습니다. 다시 시도해주세요.'),
+            backgroundColor: YouthFieldColor.blue700,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override
@@ -46,7 +64,6 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
           ),
-          // 뒤로가기 버튼
           Positioned(
             top: 40,
             left: 16,
@@ -59,105 +76,33 @@ class _LoginPageState extends State<LoginPage> {
               onPressed: () => Navigator.pop(context),
             ),
           ),
-
           Center(
             child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 540),
+              constraints: const BoxConstraints(maxWidth: 480),
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text(
-                      '로그인',
+                      'Youth Field',
                       style: YouthFieldTextStyle.title3.copyWith(
                         color: YouthFieldColor.white,
+                        fontWeight: FontWeight.w700,
                       ),
-                    ),
-                    const SizedBox(height: 48),
-                    AuthTextField(
-                      controller: _emailController,
-                      hint: '이메일을 입력해주세요.',
                     ),
                     const SizedBox(height: 10),
-                    AuthTextField(
-                      controller: _passwordController,
-                      hint: '비밀번호를 입력해주세요.',
-                      obscureText: !_passwordVisible,
-                      suffix: IconButton(
-                        icon: Icon(
-                          _passwordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
-                          color: YouthFieldColor.black500,
-                        ),
-                        onPressed: () => setState(
-                          () => _passwordVisible = !_passwordVisible,
-                        ),
+                    Text(
+                      '유소년 축구 선수들의 성장을 함께합니다',
+                      style: YouthFieldTextStyle.placeholder.copyWith(
+                        color: YouthFieldColor.white.withOpacity(0.8),
                       ),
+                      textAlign: TextAlign.center,
                     ),
-                    const SizedBox(height: 40),
-                    AuthButton(
-                      label: '로그인',
-                      backgroundColor: YouthFieldColor.gold,
-                      labelColor: YouthFieldColor.white,
-                      onTap: () => Navigator.pop(context, true),
-                    ),
-                    const SizedBox(height: 10),
-                    AuthButton(
-                      label: '구글 로그인',
-                      backgroundColor: YouthFieldColor.white,
-                      labelColor: YouthFieldColor.black800,
-                      prefix: SvgPicture.asset(
-                        'assets/svg/google_logo.svg',
-                        width: 24,
-                        height: 24,
-                        placeholderBuilder: (_) => Container(
-                          width: 24,
-                          height: 24,
-                          decoration: const BoxDecoration(
-                            color: Color(0xFFEA4335),
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: const Text(
-                            'G',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ),
-                      onTap: () {},
-                    ),
-                    const SizedBox(height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Text(
-                          '아직 계정이 없나요?  ',
-                          style: YouthFieldTextStyle.placeholder.copyWith(
-                            color: YouthFieldColor.white,
-                          ),
-                        ),
-                        GestureDetector(
-                          onTap: () => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const SignupPage(),
-                            ),
-                          ),
-                          child: Text(
-                            '회원가입',
-                            style: YouthFieldTextStyle.placeholder.copyWith(
-                              color: YouthFieldColor.gold,
-                              fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ],
+                    const SizedBox(height: 60),
+                    _GoogleLoginButton(
+                      isLoading: _isLoading,
+                      onTap: _signInWithGoogle,
                     ),
                   ],
                 ),
@@ -165,6 +110,56 @@ class _LoginPageState extends State<LoginPage> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _GoogleLoginButton extends StatelessWidget {
+  final bool isLoading;
+  final VoidCallback onTap;
+
+  const _GoogleLoginButton({required this.isLoading, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: isLoading ? null : onTap,
+      child: Container(
+        width: double.infinity,
+        height: 56,
+        decoration: BoxDecoration(
+          color: YouthFieldColor.white,
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: isLoading
+            ? const Center(
+                child: SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: YouthFieldColor.blue700,
+                  ),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SvgPicture.asset(
+                    'assets/svg/google_logo.svg',
+                    width: 22,
+                    height: 22,
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    'Google로 로그인',
+                    style: YouthFieldTextStyle.body4.copyWith(
+                      color: YouthFieldColor.black800,
+                    ),
+                  ),
+                ],
+              ),
       ),
     );
   }

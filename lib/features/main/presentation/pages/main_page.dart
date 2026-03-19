@@ -495,7 +495,7 @@ class _MainPageState extends State<MainPage> {
               if (s.youtubeUrl != null)
                 GestureDetector(
                   onTap: () async {
-                    final url = Uri.tryParse(s.youtubeUel!);
+                    final url = Uri.tryParse(s.youtubeUrl!);
                     if (url != null && await canLaunchUrl(url)) {
                       await launchUrl(url, mode: LaunchMode.externalApplication);
                     }
