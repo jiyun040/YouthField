@@ -18,8 +18,7 @@ class _SignupPageState extends State<SignupPage> {
   final _codeController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-
-  bool _codeVisible = false;
+  
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
   bool _codeSent = false;
@@ -140,7 +139,6 @@ class _SignupPageState extends State<SignupPage> {
                     AuthTextField(
                       controller: _codeController,
                       hint: '인증번호를 입력해주세요.',
-                      obscureText: !_codeVisible,
                     ),
                     if (_codeSent) ...[
                       const SizedBox(height: 6),
