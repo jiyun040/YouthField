@@ -18,36 +18,39 @@ class MatchDetailPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: YouthFieldColor.background,
-      body: Column(
-        children: [
-          _MatchDetailHeader(eventTitle: eventTitle),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  _ScoreCard(match: match),
-                  if (match.events.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    _EventsSection(events: match.events),
+      body: SafeArea(
+        bottom: false,
+        child: Column(
+          children: [
+            _MatchDetailHeader(eventTitle: eventTitle),
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    _ScoreCard(match: match),
+                    if (match.events.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _EventsSection(events: match.events),
+                    ],
+                    if (match.homePlayers.isNotEmpty ||
+                        match.awayPlayers.isNotEmpty) ...[
+                      const SizedBox(height: 24),
+                      _LineupSection(
+                        homeTeam: match.homeTeam,
+                        awayTeam: match.awayTeam,
+                        homePlayers: match.homePlayers,
+                        awayPlayers: match.awayPlayers,
+                      ),
+                    ],
+                    const SizedBox(height: 40),
                   ],
-                  if (match.homePlayers.isNotEmpty ||
-                      match.awayPlayers.isNotEmpty) ...[
-                    const SizedBox(height: 24),
-                    _LineupSection(
-                      homeTeam: match.homeTeam,
-                      awayTeam: match.awayTeam,
-                      homePlayers: match.homePlayers,
-                      awayPlayers: match.awayPlayers,
-                    ),
-                  ],
-                  const SizedBox(height: 40),
-                ],
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -106,7 +109,7 @@ class _ScoreCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasResult = match.score != null;
+    final hasResult = (match.score?.trim().isNotEmpty ?? false);
 
     return Container(
       padding: const EdgeInsets.all(24),
@@ -138,7 +141,7 @@ class _ScoreCard extends StatelessWidget {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Text(
-                  hasResult ? match.score! : 'VS',
+                  hasResult ? match.score!.trim() : 'VS',
                   style: YouthFieldTextStyle.title4.copyWith(
                     color: hasResult
                         ? YouthFieldColor.black800
