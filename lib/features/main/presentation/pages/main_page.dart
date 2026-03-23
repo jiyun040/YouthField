@@ -6,6 +6,7 @@ import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/core/widgets/yf_app_bar.dart';
 import 'package:youthfield/core/widgets/yf_menu_bar.dart';
 import 'package:youthfield/features/auth/presentation/pages/login_page.dart';
+import 'package:youthfield/features/schedule/presentation/pages/schedule_page.dart';
 import 'package:youthfield/features/skill/presentation/pages/skill_page.dart';
 import 'package:youthfield/features/skill/presentation/widgets/skill_card.dart';
 import '../widgets/player_card.dart';
@@ -136,6 +137,7 @@ const _tabs = ['선수 정보', '스킬', '경기 / 연습 일지', '경기 일�
 const double _baseHeaderHeight = YFAppBar.barHeight + YFMenuBar.barHeight;
 const double _skillSubHeaderHeight = 72.0;
 const double _skillHeaderHeight = _baseHeaderHeight + _skillSubHeaderHeight;
+const double _scheduleHeaderHeight = _baseHeaderHeight + _skillSubHeaderHeight;
 
 class MainPage extends StatefulWidget {
   const MainPage({super.key});
@@ -153,14 +155,19 @@ class _MainPageState extends State<MainPage> {
   String _skillSearchQuery = '';
   final _skillSearchController = TextEditingController();
 
+  int? _selectedScheduleIndex;
+
   @override
   void dispose() {
     _skillSearchController.dispose();
     super.dispose();
   }
 
-  double get _headerHeight =>
-      _selectedTab == 1 ? _skillHeaderHeight : _baseHeaderHeight;
+  double get _headerHeight {
+    if (_selectedTab == 1) return _skillHeaderHeight;
+    if (_selectedTab == 3) return _scheduleHeaderHeight;
+    return _baseHeaderHeight;
+  }
 
   Future<void> _openLogin() async {
     final result = await Navigator.push<bool>(
@@ -180,6 +187,9 @@ class _MainPageState extends State<MainPage> {
         _selectedStepIndex = 0;
         _skillSearchQuery = '';
         _skillSearchController.clear();
+      }
+      if (i != 3) {
+        _selectedScheduleIndex = null;
       }
     });
   }
@@ -221,6 +231,7 @@ class _MainPageState extends State<MainPage> {
                       _selectedStepIndex = 0;
                       _skillSearchQuery = '';
                       _skillSearchController.clear();
+                      _selectedScheduleIndex = null;
                     });
                   },
                 ),
@@ -230,6 +241,7 @@ class _MainPageState extends State<MainPage> {
                   onTabSelected: _onTabSelected,
                 ),
                 if (_selectedTab == 1) _buildSkillSubHeader(),
+                if (_selectedTab == 3) _buildScheduleSubHeader(),
               ],
             ),
           ),
@@ -247,7 +259,10 @@ class _MainPageState extends State<MainPage> {
       case 2:
         return _buildPlaceholder('경기 / 연습 일지');
       case 3:
-        return _buildPlaceholder('경기 일정');
+        return ScheduleBody(
+          selectedIndex: _selectedScheduleIndex,
+          onSelect: (i) => setState(() => _selectedScheduleIndex = i),
+        );
       default:
         return const SizedBox.shrink();
     }
@@ -497,7 +512,10 @@ class _MainPageState extends State<MainPage> {
                   onTap: () async {
                     final url = Uri.tryParse(s.youtubeUrl!);
                     if (url != null && await canLaunchUrl(url)) {
-                      await launchUrl(url, mode: LaunchMode.externalApplication);
+                      await launchUrl(
+                        url,
+                        mode: LaunchMode.externalApplication,
+                      );
                     }
                   },
                   child: SvgPicture.asset(
@@ -641,6 +659,52 @@ class _MainPageState extends State<MainPage> {
               )),
 
           const SizedBox(height: 40),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildScheduleSubHeader() {
+    return Container(
+      height: 72,
+      color: YouthFieldColor.background,
+      child: Stack(
+        children: [
+          Center(
+            child: Text(
+              '경기일정',
+              style: YouthFieldTextStyle.body3.copyWith(
+                color: YouthFieldColor.black800,
+              ),
+            ),
+          ),
+          Positioned(
+            left: 8,
+            top: 0,
+            bottom: 0,
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: IconButton(
+                icon: const Icon(
+                  Icons.chevron_left,
+                  color: YouthFieldColor.blue700,
+                  size: 32,
+                ),
+                splashColor: Colors.transparent,
+                highlightColor: Colors.transparent,
+                hoverColor: Colors.transparent,
+                onPressed: () {
+                  setState(() {
+                    if (_selectedScheduleIndex != null) {
+                      _selectedScheduleIndex = null;
+                    } else {
+                      _selectedTab = 0;
+                    }
+                  });
+                },
+              ),
+            ),
+          ),
         ],
       ),
     );

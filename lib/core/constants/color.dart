@@ -10,6 +10,7 @@ abstract final class YouthFieldColor {
 
   /// black
   static const Color black50 = Color(0xFFF1F1F1);
+  static const Color black300 = Color(0xFFA0A0A0);
   static const Color black500 = Color(0xFF707070);
   static const Color black800 = Color(0xFF333333);
 
