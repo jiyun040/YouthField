@@ -304,7 +304,7 @@ class _EventRow extends StatelessWidget {
       case MatchEventType.redCard:
         return '퇴장';
       case MatchEventType.substitution:
-        return 'OUT ${event.playerName}      IN ${event.subPlayerName ?? ''}';
+        return 'OUT ${event.playerName}      IN ${event.subPlayerName ?? '-'}';
     }
   }
 
