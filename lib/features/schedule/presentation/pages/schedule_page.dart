@@ -7,8 +7,15 @@ import 'package:youthfield/features/schedule/presentation/pages/schedule_detail_
 import '../widgets/match_row.dart';
 import '../widgets/schedule_list_item.dart';
 
+/// 일정 탭의 최상위 라우팅 위젯
+///
+/// - [selectedIndex]가 null이면 전체 일정 목록([_ScheduleList]) 표시
+/// - [selectedIndex]가 지정되면 해당 대회의 상세 페이지([ScheduleDetailPage]) 표시
 class ScheduleBody extends StatelessWidget {
+  /// 현재 선택된 일정 인덱스 (null이면 목록 뷰)
   final int? selectedIndex;
+
+  /// 목록에서 항목을 선택했을 때 호출되는 콜백
   final ValueChanged<int> onSelect;
 
   const ScheduleBody({
@@ -19,14 +26,20 @@ class ScheduleBody extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 선택된 인덱스가 있으면 해당 대회의 상세 뷰로 전환
     if (selectedIndex != null) {
       return ScheduleDetailPage(event: scheduleMockEvents[selectedIndex!]);
     }
+    // 선택된 항목이 없으면 전체 일정 목록 표시
     return _ScheduleList(onSelect: onSelect);
   }
 }
 
+/// 전체 대회·리그 목록을 표시하는 위젯
+///
+/// [scheduleMockEvents]를 순회하며 [ScheduleListItem]을 렌더링
 class _ScheduleList extends StatelessWidget {
+  /// 항목 탭 시 호출되는 콜백 (인덱스 전달)
   final ValueChanged<int> onSelect;
 
   const _ScheduleList({required this.onSelect});
