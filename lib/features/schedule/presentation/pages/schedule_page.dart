@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:youthfield/core/constants/color.dart';
-import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/schedule/data/repositories/schedule_repository_impl.dart';
-import 'package:youthfield/features/schedule/domain/entities/schedule.dart';
 import 'package:youthfield/features/schedule/presentation/pages/schedule_detail_page.dart';
-import '../widgets/match_row.dart';
 import '../widgets/schedule_list_item.dart';
 
 class ScheduleBody extends StatelessWidget {
