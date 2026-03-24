@@ -3,30 +3,17 @@ import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 
-/// 일지 화면 모드
 enum DiaryMode { list, write, detail }
 
-// ── DiaryBody ────────────────────────────────────────────────────────────────
+const int _kPageSize = 10;
+const double _kRowHeight = 80;
+const double _kRowGap = 10;
 
-/// 경기/연습 일지 탭의 루트 위젯
-///
-/// [mode]에 따라 목록·작성·상세 뷰를 전환
-/// - [mode] == list   → [_DiaryListView]
-/// - [mode] == write  → [_DiaryWriteView]
-/// - [mode] == detail → [_DiaryDetailView]
 class DiaryBody extends StatelessWidget {
   final DiaryMode mode;
-
-  /// 상세/수정 대상 일지 항목 (write/detail 모드에서 사용)
   final DiaryEntry? selectedEntry;
-
-  /// 목록에서 항목 탭 시 호출 → main_page에서 detail 모드로 전환
   final ValueChanged<DiaryEntry> onEntryTap;
-
-  /// 작성 완료 시 호출 → main_page에서 list 모드로 전환하고 항목 추가
   final ValueChanged<DiaryEntry> onSave;
-
-  /// 현재 관리 중인 일지 목록
   final List<DiaryEntry> entries;
 
   const DiaryBody({
@@ -54,22 +41,44 @@ class DiaryBody extends StatelessWidget {
   }
 }
 
-// ── _DiaryListView ───────────────────────────────────────────────────────────
-
-/// 일지 목록 뷰
-///
-/// 날짜 내림차순으로 정렬된 일지 항목을 표시
-/// 각 행은 날짜 + 내용 미리보기로 구성
-class _DiaryListView extends StatelessWidget {
+class _DiaryListView extends StatefulWidget {
   final List<DiaryEntry> entries;
   final ValueChanged<DiaryEntry> onEntryTap;
 
   const _DiaryListView({required this.entries, required this.onEntryTap});
 
   @override
+  State<_DiaryListView> createState() => _DiaryListViewState();
+}
+
+class _DiaryListViewState extends State<_DiaryListView> {
+  final _pageController = PageController();
+  int _currentPage = 0;
+
+  List<DiaryEntry> get _sorted =>
+      [...widget.entries]..sort((a, b) => b.date.compareTo(a.date));
+
+  int get _totalPages {
+    final n = _sorted.length;
+    if (n == 0) return 1;
+    return (n / _kPageSize).ceil();
+  }
+
+  int get _indicatorIndex {
+    if (_totalPages <= 1 || _currentPage == 0) return 0;
+    if (_currentPage == _totalPages - 1) return 2;
+    return 1;
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // 날짜 내림차순 정렬 (최신 일지가 위로)
-    final sorted = [...entries]..sort((a, b) => b.date.compareTo(a.date));
+    final sorted = _sorted;
 
     if (sorted.isEmpty) {
       return Center(
@@ -84,26 +93,74 @@ class _DiaryListView extends StatelessWidget {
         ),
       );
     }
+    const pageViewHeight = _kPageSize * (_kRowHeight + _kRowGap);
 
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        for (int i = 0; i < sorted.length; i++) ...[
-          _DiaryListRow(
-            entry: sorted[i],
-            onTap: () => onEntryTap(sorted[i]),
+        const SizedBox(height: 24),
+        SizedBox(
+          height: pageViewHeight,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: _totalPages,
+            onPageChanged: (page) => setState(() => _currentPage = page),
+            itemBuilder: (context, pageIndex) {
+              final start = pageIndex * _kPageSize;
+              final end = (start + _kPageSize).clamp(0, sorted.length);
+              final pageEntries = sorted.sublist(start, end);
+
+              return Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: pageEntries
+                      .map(
+                        (entry) => _DiaryListRow(
+                          entry: entry,
+                          onTap: () => widget.onEntryTap(entry),
+                        ),
+                      )
+                      .toList(),
+                ),
+              );
+            },
           ),
-          if (i < sorted.length - 1)
-            const Divider(height: 1, color: YouthFieldColor.black50),
-        ],
+        ),
+        const SizedBox(height: 20),
+        _DiaryPageIndicator(activeIndex: _indicatorIndex),
+        const SizedBox(height: 20),
       ],
     );
   }
 }
 
-/// 목록 단일 행
-///
-/// 좌측: 날짜 (고정 너비), 우측: 내용 미리보기 (1줄 말줄임)
+class _DiaryPageIndicator extends StatelessWidget {
+  final int activeIndex;
+
+  const _DiaryPageIndicator({required this.activeIndex});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: List.generate(3, (i) {
+        return AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          margin: const EdgeInsets.symmetric(horizontal: 4),
+          width: 8,
+          height: 8,
+          decoration: BoxDecoration(
+            color: i == activeIndex
+                ? YouthFieldColor.blue700
+                : YouthFieldColor.black50,
+            shape: BoxShape.circle,
+          ),
+        );
+      }),
+    );
+  }
+}
+
 class _DiaryListRow extends StatelessWidget {
   final DiaryEntry entry;
   final VoidCallback onTap;
@@ -112,28 +169,29 @@ class _DiaryListRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
+    return GestureDetector(
       onTap: onTap,
-      splashColor: Colors.transparent,
-      highlightColor: Colors.transparent,
-      hoverColor: YouthFieldColor.blue50,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+      child: Container(
+        height: _kRowHeight,
+        margin: const EdgeInsets.only(bottom: _kRowGap),
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        decoration: BoxDecoration(
+          color: YouthFieldColor.blue50,
+          borderRadius: BorderRadius.circular(8),
+        ),
         child: Row(
           children: [
-            // 날짜 고정 너비
             SizedBox(
-              width: 140,
+              width: 160,
               child: Text(
                 entry.formattedDate,
                 style: YouthFieldTextStyle.textCount.copyWith(
                   color: YouthFieldColor.black800,
-                  fontWeight: FontWeight.w600,
+                  fontWeight: FontWeight.w700,
                 ),
               ),
             ),
-            const SizedBox(width: 16),
-            // 내용 미리보기 (1줄 말줄임)
+            const SizedBox(width: 20),
             Expanded(
               child: Text(
                 entry.content,
@@ -151,12 +209,6 @@ class _DiaryListRow extends StatelessWidget {
   }
 }
 
-// ── _DiaryWriteView ──────────────────────────────────────────────────────────
-
-/// 일지 작성 폼 뷰
-///
-/// 컨디션 슬라이더, 수면 시간, 경기/연습 내용, 잘한 점, 개선할 점을 입력
-/// 내용이 하나라도 입력되면 "작성하기" 버튼 활성화
 class _DiaryWriteView extends StatefulWidget {
   final ValueChanged<DiaryEntry> onSave;
 
@@ -167,13 +219,8 @@ class _DiaryWriteView extends StatefulWidget {
 }
 
 class _DiaryWriteViewState extends State<_DiaryWriteView> {
-  /// 컨디션 슬라이더 값 (0.0 ~ 100.0)
   double _condition = 50;
-
-  /// 수면 시작 시각 (예: "22:30")
   String? _sleepStart;
-
-  /// 기상 시각 (예: "06:30")
   String? _sleepEnd;
 
   final _contentController = TextEditingController();
@@ -188,10 +235,8 @@ class _DiaryWriteViewState extends State<_DiaryWriteView> {
     super.dispose();
   }
 
-  /// 내용이 하나라도 입력되었으면 작성하기 버튼 활성화
   bool get _canSave => _contentController.text.trim().isNotEmpty;
 
-  /// 시간 선택 다이얼로그 표시
   Future<void> _pickTime(bool isStart) async {
     final picked = await showTimePicker(
       context: context,
@@ -241,16 +286,13 @@ class _DiaryWriteViewState extends State<_DiaryWriteView> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 컨디션 슬라이더
           _SectionLabel(label: '컨디션'),
           const SizedBox(height: 8),
           _ConditionSlider(
             value: _condition,
             onChanged: (v) => setState(() => _condition = v),
           ),
-          const SizedBox(height: 24),
-
-          // 수면 시간
+          const SizedBox(height: 20),
           _SectionLabel(label: '수면 시간'),
           const SizedBox(height: 8),
           _SleepTimePicker(
@@ -259,21 +301,21 @@ class _DiaryWriteViewState extends State<_DiaryWriteView> {
             onPickStart: () => _pickTime(true),
             onPickEnd: () => _pickTime(false),
           ),
-          const SizedBox(height: 24),
-
-          // 경기/연습 내용
-          _SectionLabel(label: '경기 / 연습 내용'),
+          const SizedBox(height: 20),
+          _LabelRow(
+            label: '경기 / 연습 내용',
+            count: _contentController.text.length,
+            maxCount: 1000,
+          ),
           const SizedBox(height: 8),
-          _CharCountTextField(
+          _DiaryTextField(
             controller: _contentController,
             maxLength: 1000,
             hintText: '경기 / 연습 내용을 기록해주세요.',
-            minLines: 6,
+            minLines: 7,
             onChanged: (_) => setState(() {}),
           ),
-          const SizedBox(height: 24),
-
-          // 잘한 점 / 개선할 점 (좌우 배치)
+          const SizedBox(height: 20),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -281,30 +323,38 @@ class _DiaryWriteViewState extends State<_DiaryWriteView> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _SectionLabel(label: '잘한 점'),
+                    _LabelRow(
+                      label: '잘한 점',
+                      count: _goodController.text.length,
+                      maxCount: 1000,
+                    ),
                     const SizedBox(height: 8),
-                    _CharCountTextField(
+                    _DiaryTextField(
                       controller: _goodController,
-                      maxLength: 500,
+                      maxLength: 1000,
                       hintText: '잘한 점을 기록해주세요.',
-                      minLines: 4,
+                      minLines: 5,
                       onChanged: (_) => setState(() {}),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _SectionLabel(label: '개선할 점'),
+                    _LabelRow(
+                      label: '개선할 점',
+                      count: _improvController.text.length,
+                      maxCount: 1000,
+                    ),
                     const SizedBox(height: 8),
-                    _CharCountTextField(
+                    _DiaryTextField(
                       controller: _improvController,
-                      maxLength: 500,
+                      maxLength: 1000,
                       hintText: '개선할 점을 기록해주세요.',
-                      minLines: 4,
+                      minLines: 5,
                       onChanged: (_) => setState(() {}),
                     ),
                   ],
@@ -312,9 +362,7 @@ class _DiaryWriteViewState extends State<_DiaryWriteView> {
               ),
             ],
           ),
-          const SizedBox(height: 32),
-
-          // 작성하기 버튼
+          const SizedBox(height: 40),
           _SubmitButton(
             enabled: _canSave,
             onPressed: _canSave ? _handleSave : null,
@@ -325,9 +373,6 @@ class _DiaryWriteViewState extends State<_DiaryWriteView> {
   }
 }
 
-// ── _DiaryDetailView ─────────────────────────────────────────────────────────
-
-/// 일지 상세 보기 뷰 (읽기 전용)
 class _DiaryDetailView extends StatelessWidget {
   final DiaryEntry entry;
 
@@ -340,31 +385,24 @@ class _DiaryDetailView extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // 컨디션 슬라이더 (읽기 전용)
           _SectionLabel(label: '컨디션'),
           const SizedBox(height: 8),
           _ConditionSlider(
             value: entry.condition.toDouble(),
-            onChanged: null, // null이면 비활성 (읽기 전용)
+            onChanged: null,
           ),
-          const SizedBox(height: 24),
-
-          // 수면 시간
+          const SizedBox(height: 20),
           _SectionLabel(label: '수면 시간'),
           const SizedBox(height: 8),
           _ReadOnlySleepTime(
             sleepStart: entry.sleepStart,
             sleepEnd: entry.sleepEnd,
           ),
-          const SizedBox(height: 24),
-
-          // 경기/연습 내용
+          const SizedBox(height: 20),
           _SectionLabel(label: '경기 / 연습 내용'),
           const SizedBox(height: 8),
           _ReadOnlyText(text: entry.content),
-          const SizedBox(height: 24),
-
-          // 잘한 점 / 개선할 점
+          const SizedBox(height: 20),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -378,7 +416,7 @@ class _DiaryDetailView extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 20),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -397,9 +435,6 @@ class _DiaryDetailView extends StatelessWidget {
   }
 }
 
-// ── 공통 서브 위젯 ────────────────────────────────────────────────────────────
-
-/// 섹션 레이블 텍스트
 class _SectionLabel extends StatelessWidget {
   final String label;
 
@@ -417,9 +452,34 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// 컨디션 슬라이더
-///
-/// [onChanged]가 null이면 읽기 전용 (상세 뷰에서 사용)
+class _LabelRow extends StatelessWidget {
+  final String label;
+  final int count;
+  final int maxCount;
+
+  const _LabelRow({
+    required this.label,
+    required this.count,
+    required this.maxCount,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        _SectionLabel(label: label),
+        Text(
+          '$count/$maxCount',
+          style: YouthFieldTextStyle.placeholder.copyWith(
+            color: YouthFieldColor.black500,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class _ConditionSlider extends StatelessWidget {
   final double value;
   final ValueChanged<double>? onChanged;
@@ -430,7 +490,6 @@ class _ConditionSlider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        // 퍼센트 레이블 행
         const Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -457,6 +516,7 @@ class _ConditionSlider extends StatelessWidget {
             value: value,
             min: 0,
             max: 100,
+            divisions: 4,
             onChanged: onChanged,
           ),
         ),
@@ -465,9 +525,6 @@ class _ConditionSlider extends StatelessWidget {
   }
 }
 
-/// 수면 시간 선택 위젯 (작성 뷰)
-///
-/// 탭 시 시간 선택 다이얼로그 오픈
 class _SleepTimePicker extends StatelessWidget {
   final String? sleepStart;
   final String? sleepEnd;
@@ -485,7 +542,8 @@ class _SleepTimePicker extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        constraints: const BoxConstraints(minWidth: 80),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: YouthFieldColor.blue50,
           borderRadius: BorderRadius.circular(8),
@@ -493,8 +551,9 @@ class _SleepTimePicker extends StatelessWidget {
         child: Text(
           time ?? placeholder,
           style: YouthFieldTextStyle.textCount.copyWith(
-            color:
-                time != null ? YouthFieldColor.black800 : YouthFieldColor.black300,
+            color: time != null
+                ? YouthFieldColor.black800
+                : YouthFieldColor.black300,
           ),
         ),
       ),
@@ -505,23 +564,22 @@ class _SleepTimePicker extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(child: _timeBox(sleepStart, '시작시간', onPickStart)),
+        _timeBox(sleepStart, '취침시간', onPickStart),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           child: Text(
-            '—',
+            '~',
             style: YouthFieldTextStyle.textCount.copyWith(
               color: YouthFieldColor.black500,
             ),
           ),
         ),
-        Expanded(child: _timeBox(sleepEnd, '기상시간', onPickEnd)),
+        _timeBox(sleepEnd, '기상시간', onPickEnd),
       ],
     );
   }
 }
 
-/// 수면 시간 표시 위젯 (상세 뷰, 읽기 전용)
 class _ReadOnlySleepTime extends StatelessWidget {
   final String? sleepStart;
   final String? sleepEnd;
@@ -530,10 +588,9 @@ class _ReadOnlySleepTime extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final text =
-        (sleepStart != null && sleepEnd != null)
-            ? '$sleepStart ~ $sleepEnd'
-            : '-';
+    final text = (sleepStart != null && sleepEnd != null)
+        ? '$sleepStart ~ $sleepEnd'
+        : '-';
     return Text(
       text,
       style: YouthFieldTextStyle.textCount.copyWith(
@@ -543,15 +600,14 @@ class _ReadOnlySleepTime extends StatelessWidget {
   }
 }
 
-/// 글자 수 카운터가 있는 멀티라인 텍스트 필드
-class _CharCountTextField extends StatelessWidget {
+class _DiaryTextField extends StatelessWidget {
   final TextEditingController controller;
   final int maxLength;
   final String hintText;
   final int minLines;
   final ValueChanged<String>? onChanged;
 
-  const _CharCountTextField({
+  const _DiaryTextField({
     required this.controller,
     required this.maxLength,
     required this.hintText,
@@ -561,51 +617,35 @@ class _CharCountTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Container(
-          decoration: BoxDecoration(
-            color: YouthFieldColor.blue50,
-            borderRadius: BorderRadius.circular(8),
+    return Container(
+      decoration: BoxDecoration(
+        color: YouthFieldColor.blue50,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: TextField(
+        controller: controller,
+        maxLines: null,
+        minLines: minLines,
+        maxLength: maxLength,
+        onChanged: onChanged,
+        buildCounter: (_, {required currentLength, required isFocused, maxLength}) => null,
+        decoration: InputDecoration(
+          hintText: hintText,
+          hintStyle: YouthFieldTextStyle.placeholder.copyWith(
+            color: YouthFieldColor.black300,
           ),
-          child: TextField(
-            controller: controller,
-            maxLines: null,
-            minLines: minLines,
-            maxLength: maxLength,
-            onChanged: onChanged,
-            buildCounter:
-                (_, {required currentLength, required isFocused, maxLength}) =>
-                    null, // 기본 카운터 숨김 (아래 커스텀 표시)
-            decoration: InputDecoration(
-              hintText: hintText,
-              hintStyle: YouthFieldTextStyle.placeholder.copyWith(
-                color: YouthFieldColor.black300,
-              ),
-              border: InputBorder.none,
-              isDense: true,
-              contentPadding: const EdgeInsets.all(16),
-            ),
-            style: YouthFieldTextStyle.textCount.copyWith(
-              color: YouthFieldColor.black800,
-            ),
-          ),
+          border: InputBorder.none,
+          isDense: true,
+          contentPadding: const EdgeInsets.all(16),
         ),
-        const SizedBox(height: 4),
-        // 커스텀 글자 수 카운터
-        Text(
-          '${controller.text.length}/$maxLength',
-          style: YouthFieldTextStyle.placeholder.copyWith(
-            color: YouthFieldColor.black500,
-          ),
+        style: YouthFieldTextStyle.textCount.copyWith(
+          color: YouthFieldColor.black800,
         ),
-      ],
+      ),
     );
   }
 }
 
-/// 읽기 전용 텍스트 표시 위젯 (상세 뷰)
 class _ReadOnlyText extends StatelessWidget {
   final String text;
 
@@ -616,15 +656,13 @@ class _ReadOnlyText extends StatelessWidget {
     return Text(
       text.isEmpty ? '-' : text,
       style: YouthFieldTextStyle.textCount.copyWith(
-        color: text.isEmpty ? YouthFieldColor.black300 : YouthFieldColor.black800,
+        color:
+            text.isEmpty ? YouthFieldColor.black300 : YouthFieldColor.black800,
       ),
     );
   }
 }
 
-/// 작성하기 버튼
-///
-/// [enabled]가 false이면 회색 비활성, true이면 파란색 활성
 class _SubmitButton extends StatelessWidget {
   final bool enabled;
   final VoidCallback? onPressed;
