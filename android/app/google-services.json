@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1017186877485",
+    "project_id": "youthfield-a4fd8",
+    "storage_bucket": "youthfield-a4fd8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1017186877485:android:7ed954100cea5db59cb8a4",
+        "android_client_info": {
+          "package_name": "com.example.youthfield"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1017186877485-2disoslp84641jjn4u2lqi0uqn615v42.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBY5QnzpFTGUOCNVHILjcLuTqZJbX-Knl8"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1017186877485-2disoslp84641jjn4u2lqi0uqn615v42.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
