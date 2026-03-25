@@ -3,6 +3,8 @@ import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 
 class YFMenuBar extends StatelessWidget {
+  static const double barHeight = 56;
+
   final List<String> tabs;
   final int selectedIndex;
   final ValueChanged<int> onTabSelected;
