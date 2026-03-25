@@ -5,6 +5,7 @@ import 'package:youthfield/core/widgets/yf_app_bar.dart';
 import 'package:youthfield/core/widgets/yf_menu_bar.dart';
 import 'package:youthfield/features/auth/presentation/pages/login_page.dart';
 import 'package:youthfield/features/diary/data/repositories/diary_repository_impl.dart';
+import 'package:youthfield/features/mypage/presentation/pages/mypage_page.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import 'package:youthfield/features/schedule/presentation/pages/schedule_page.dart';
@@ -82,6 +83,17 @@ class _MainPageState extends State<MainPage> {
       _selectedTab = 0;
       _selectedScheduleIndex = null;
     });
+  }
+
+  void _openMyPage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => MypagePage(
+          onDiaryMoreTap: () => setState(() => _selectedTab = 2),
+        ),
+      ),
+    );
   }
 
   void _onDiaryPageTap(int page) => setState(() {
@@ -169,6 +181,7 @@ class _MainPageState extends State<MainPage> {
           onLogin: _openLogin,
           onLogout: () => setState(() => _isLoggedIn = false),
           onLogoTap: _onLogoTap,
+          onProfileTap: _openMyPage,
         ),
         YFMenuBar(
           tabs: _tabs,

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 
@@ -10,6 +11,7 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onLogin;
   final VoidCallback onLogout;
   final VoidCallback? onLogoTap;
+  final VoidCallback? onProfileTap;
 
   const YFAppBar({
     super.key,
@@ -17,6 +19,7 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onLogin,
     required this.onLogout,
     this.onLogoTap,
+    this.onProfileTap,
   });
 
   @override
@@ -58,7 +61,15 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
               ),
             ),
           ),
-          const Icon(Icons.sports_soccer, color: YouthFieldColor.blue700),
+          GestureDetector(
+            onTap: onProfileTap,
+            child: MouseRegion(
+              cursor: onProfileTap != null
+                  ? SystemMouseCursors.click
+                  : MouseCursor.defer,
+              child: const Icon(Symbols.sports_soccer, color: YouthFieldColor.blue700),
+            ),
+          ),
         ],
       ),
     );
