@@ -1,9 +1,11 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
+import 'package:youthfield/features/auth/presentation/pages/profile_setup_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -15,25 +17,32 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
-  final _googleSignIn = GoogleSignIn(
-    // TODO: Google Cloud Console에서 발급받은 Client ID로 교체하세요.
-    clientId: 'YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com',
-    scopes: ['email', 'profile'],
-  );
-
   Future<void> _signInWithGoogle() async {
     if (_isLoading) return;
     setState(() => _isLoading = true);
 
     try {
-      final account = await _googleSignIn.signIn();
-      if (account != null && mounted) {
-        Navigator.pop(context, true);
+      final googleUser = await GoogleSignIn().signIn();
+      if (googleUser == null) return;
+
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      await FirebaseAuth.instance.signInWithCredential(credential);
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => const ProfileSetupPage()),
+        );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
+          const SnackBar(
             content: Text('로그인에 실패하였습니다. 다시 시도해주세요.'),
             backgroundColor: YouthFieldColor.blue700,
           ),
