@@ -23,6 +23,13 @@ class DiaryListRow extends StatelessWidget {
         decoration: BoxDecoration(
           color: YouthFieldColor.blue50,
           borderRadius: BorderRadius.circular(8),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [

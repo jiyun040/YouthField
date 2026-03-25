@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 
@@ -7,6 +8,7 @@ class AuthTextField extends StatelessWidget {
   final String hint;
   final bool obscureText;
   final Widget? suffix;
+  final List<TextInputFormatter>? inputFormatters;
 
   const AuthTextField({
     super.key,
@@ -14,6 +16,7 @@ class AuthTextField extends StatelessWidget {
     required this.hint,
     this.obscureText = false,
     this.suffix,
+    this.inputFormatters,
   });
 
   @override
@@ -23,6 +26,7 @@ class AuthTextField extends StatelessWidget {
       obscureText: obscureText,
       enableSuggestions: !obscureText,
       autocorrect: !obscureText,
+      inputFormatters: inputFormatters,
       style: YouthFieldTextStyle.body4.copyWith(
         color: YouthFieldColor.black800,
       ),

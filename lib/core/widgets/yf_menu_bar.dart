@@ -3,7 +3,7 @@ import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 
 class YFMenuBar extends StatelessWidget {
-  static const double barHeight = 56;
+  static const double barHeight = 64;
 
   final List<String> tabs;
   final int selectedIndex;
@@ -19,6 +19,7 @@ class YFMenuBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      height: barHeight,
       color: YouthFieldColor.background,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: SingleChildScrollView(
