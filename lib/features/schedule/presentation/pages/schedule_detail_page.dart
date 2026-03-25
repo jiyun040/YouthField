@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/schedule/domain/entities/schedule.dart';
@@ -146,7 +147,7 @@ class _MonthDropdown extends StatelessWidget {
             ),
             const SizedBox(width: 4),
             const Icon(
-              Icons.expand_more,
+              Symbols.expand_more,
               color: YouthFieldColor.white,
               size: 18,
             ),

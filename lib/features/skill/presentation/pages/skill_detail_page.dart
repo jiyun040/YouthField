@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/core/widgets/yf_title_bar.dart';
@@ -29,7 +30,7 @@ class SkillDetailPage extends StatelessWidget {
             ? [
                 IconButton(
                   icon: const Icon(
-                    Icons.play_circle_fill,
+                    Symbols.play_circle,
                     color: Colors.red,
                     size: 28,
                   ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 
@@ -69,7 +70,7 @@ class _LoginPageState extends State<LoginPage> {
             left: 16,
             child: IconButton(
               icon: const Icon(
-                Icons.chevron_left,
+                Symbols.chevron_left,
                 color: YouthFieldColor.white,
                 size: 36,
               ),

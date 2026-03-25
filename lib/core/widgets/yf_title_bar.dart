@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 
@@ -47,7 +48,7 @@ class YFTitleBar extends StatelessWidget implements PreferredSizeWidget {
               child: IconButton(
                 onPressed: onBack ?? () => Navigator.maybePop(context),
                 icon: const Icon(
-                  Icons.chevron_left,
+                  Symbols.chevron_left,
                   color: YouthFieldColor.blue700,
                   size: 32,
                 ),

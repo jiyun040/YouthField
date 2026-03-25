@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
@@ -203,7 +204,7 @@ class _SkillPageState extends State<SkillPage> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
-                icon: const Icon(Icons.chevron_left,
+                icon: const Icon(Symbols.chevron_left,
                     color: YouthFieldColor.blue700, size: 32),
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
@@ -342,7 +343,7 @@ class _SkillPageState extends State<SkillPage> {
                     ],
                   ),
                 ),
-                const Icon(Icons.chevron_right,
+                const Icon(Symbols.chevron_right,
                     color: YouthFieldColor.black500, size: 20),
               ],
             ),

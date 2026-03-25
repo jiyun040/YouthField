@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 
@@ -108,7 +109,7 @@ class PlayerCard extends StatelessWidget {
                     Row(
                       children: [
                         const Icon(
-                          Icons.location_on,
+                          Symbols.location_on,
                           color: YouthFieldColor.white,
                           size: 12,
                         ),

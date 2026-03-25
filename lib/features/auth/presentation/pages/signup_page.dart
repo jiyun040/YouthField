@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import '../widgets/auth_button.dart';
@@ -83,7 +84,7 @@ class _SignupPageState extends State<SignupPage> {
             left: 16,
             child: IconButton(
               icon: const Icon(
-                Icons.chevron_left,
+                Symbols.chevron_left,
                 color: YouthFieldColor.white,
                 size: 36,
               ),
@@ -157,8 +158,8 @@ class _SignupPageState extends State<SignupPage> {
                       suffix: IconButton(
                         icon: Icon(
                           _passwordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                              ? Symbols.visibility
+                              : Symbols.visibility_off,
                           color: YouthFieldColor.black500,
                         ),
                         onPressed: () => setState(
@@ -174,8 +175,8 @@ class _SignupPageState extends State<SignupPage> {
                       suffix: IconButton(
                         icon: Icon(
                           _confirmPasswordVisible
-                              ? Icons.visibility
-                              : Icons.visibility_off,
+                              ? Symbols.visibility
+                              : Symbols.visibility_off,
                           color: YouthFieldColor.black500,
                         ),
                         onPressed: () => setState(
