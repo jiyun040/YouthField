@@ -23,7 +23,8 @@ class YFTitleBar extends StatelessWidget implements PreferredSizeWidget {
   Widget build(BuildContext context) {
     return Container(
       height: 64,
-      color: YouthFieldColor.white,
+      width: double.infinity,
+      color: YouthFieldColor.background,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Stack(
         alignment: Alignment.center,

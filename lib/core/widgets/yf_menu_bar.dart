@@ -19,7 +19,7 @@ class YFMenuBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: YouthFieldColor.white,
+      color: YouthFieldColor.background,
       padding: const EdgeInsets.symmetric(horizontal: 24),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
