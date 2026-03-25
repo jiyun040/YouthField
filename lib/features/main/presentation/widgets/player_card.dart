@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 
@@ -34,11 +33,8 @@ class PlayerCard extends StatelessWidget {
           children: [
             // 배경 이미지 / 플레이스홀더
             if (imageUrl != null)
-              Image.network(
-                imageUrl!,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(),
-              )
+              Image.network(imageUrl!, fit: BoxFit.cover,
+                  errorBuilder: (_, __, ___) => _placeholder())
             else
               _placeholder(),
 
@@ -46,22 +42,14 @@ class PlayerCard extends StatelessWidget {
             Positioned(
               top: 10,
               left: 10,
-              child: _Badge(
-                label: position,
-                color: Colors.white,
-                textColor: YouthFieldColor.black800,
-              ),
+              child: _Badge(label: position, color: Colors.white, textColor: YouthFieldColor.black800),
             ),
 
             // 연령대 뱃지 (우상단)
             Positioned(
               top: 10,
               right: 10,
-              child: _Badge(
-                label: ageGroup,
-                color: YouthFieldColor.blue800,
-                textColor: YouthFieldColor.white,
-              ),
+              child: _Badge(label: ageGroup, color: YouthFieldColor.blue800, textColor: YouthFieldColor.white),
             ),
 
             // 등번호
@@ -83,10 +71,7 @@ class PlayerCard extends StatelessWidget {
               right: 0,
               bottom: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
@@ -108,11 +93,7 @@ class PlayerCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(
-                          Symbols.location_on,
-                          color: YouthFieldColor.white,
-                          size: 12,
-                        ),
+                        const Icon(Icons.location_on, color: YouthFieldColor.white, size: 12),
                         const SizedBox(width: 2),
                         Expanded(
                           child: Text(
@@ -137,14 +118,14 @@ class PlayerCard extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-    decoration: const BoxDecoration(
-      gradient: LinearGradient(
-        begin: Alignment.topLeft,
-        end: Alignment.bottomRight,
-        colors: [Color(0xFFB71C1C), Color(0xFF7F0000)],
-      ),
-    ),
-  );
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [Color(0xFFB71C1C), Color(0xFF7F0000)],
+          ),
+        ),
+      );
 }
 
 class _Badge extends StatelessWidget {
@@ -152,11 +133,7 @@ class _Badge extends StatelessWidget {
   final Color color;
   final Color textColor;
 
-  const _Badge({
-    required this.label,
-    required this.color,
-    required this.textColor,
-  });
+  const _Badge({required this.label, required this.color, required this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -164,7 +141,7 @@ class _Badge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(100),
+        borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
         label,

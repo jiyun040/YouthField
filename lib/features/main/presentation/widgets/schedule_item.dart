@@ -20,7 +20,7 @@ class ScheduleItem extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
       decoration: BoxDecoration(
-        color: YouthFieldColor.blue50,
+        color: YouthFieldColor.white,
         borderRadius: BorderRadius.circular(8),
         boxShadow: [
           BoxShadow(

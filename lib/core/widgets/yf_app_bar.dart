@@ -4,8 +4,6 @@ import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 
 class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
-  static const double barHeight = 64.0;
-
   final bool isLoggedIn;
   final VoidCallback onLogin;
   final VoidCallback onLogout;
@@ -20,13 +18,13 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(barHeight);
+  Size get preferredSize => const Size.fromHeight(64);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: barHeight,
-      color: YouthFieldColor.background,
+      height: 64,
+      color: YouthFieldColor.white,
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Row(
         children: [

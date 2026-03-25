@@ -22,9 +22,7 @@ class OnboardingNavButton extends StatelessWidget {
         onPressed: onStart,
         child: Text(
           '시작하기',
-          style: YouthFieldTextStyle.title3.copyWith(
-            color: YouthFieldColor.gold,
-          ),
+          style: YouthFieldTextStyle.title3.copyWith(color: YouthFieldColor.gold),
         ),
       );
     }
