@@ -156,8 +156,9 @@ class UserSessionRepository implements MypageRepository {
         } catch (_) {
           birthDate = DateTime(2000);
         }
+        final resolvedId = firebaseUser?.uid ?? 'session';
         return PlayerProfile(
-          id: 'session',
+          id: resolvedId,
           name: name,
           profileImageBytes: bytes,
           profileImageUrl: photoUrl,

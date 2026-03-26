@@ -25,14 +25,6 @@ class MypagePage extends ConsumerStatefulWidget {
 
 class _MypagePageState extends ConsumerState<MypagePage> {
   @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (mounted) ref.invalidate(myProfileProvider);
-    });
-  }
-
-  @override
   Widget build(BuildContext context) {
     final profileAsync = ref.watch(myProfileProvider);
     return Scaffold(
@@ -42,7 +34,7 @@ class _MypagePageState extends ConsumerState<MypagePage> {
           Positioned.fill(
             child: profileAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('오류: $e')),
+              error: (e, _) => Center(child: Text('오류가 발생했습니다.')),
               data: (profile) => SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -69,12 +61,7 @@ class _MypagePageState extends ConsumerState<MypagePage> {
       color: YouthFieldColor.background,
       child: Stack(
         children: [
-          Center(
-            child: Text(
-              '마이페이지',
-              style: YouthFieldTextStyle.body3,
-            ),
-          ),
+          Center(child: Text('마이페이지', style: YouthFieldTextStyle.body3)),
           Positioned(
             left: 8,
             top: 0,
@@ -186,15 +173,14 @@ class _MypagePageState extends ConsumerState<MypagePage> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              '작성한 일지',
-              style: YouthFieldTextStyle.body4,
-            ),
+            Text('작성한 일지', style: YouthFieldTextStyle.body4),
             GestureDetector(
-              onTap: () {
-                widget.onDiaryMoreTap?.call();
-                Navigator.pop(context);
-              },
+              onTap: widget.onDiaryMoreTap == null
+                  ? null
+                  : () {
+                      widget.onDiaryMoreTap!.call();
+                      Navigator.pop(context);
+                    },
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: Text(
@@ -225,10 +211,7 @@ class _StatsTable extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          title,
-          style: YouthFieldTextStyle.body4,
-        ),
+        Text(title, style: YouthFieldTextStyle.body4),
         MypagePage.spacing10,
         Container(
           decoration: BoxDecoration(
@@ -285,10 +268,9 @@ class _TableCell extends StatelessWidget {
       child: Center(
         child: Text(
           text,
-          style:
-              (isHeader
-                      ? YouthFieldTextStyle.smallButton
-                      : YouthFieldTextStyle.textCount),
+          style: (isHeader
+              ? YouthFieldTextStyle.smallButton
+              : YouthFieldTextStyle.textCount),
         ),
       ),
     );
@@ -312,10 +294,7 @@ class _ResolveCard extends StatelessWidget {
           ),
         ),
         MypagePage.spacing10,
-        Text(
-          resolve,
-          style: YouthFieldTextStyle.textCount,
-        ),
+        Text(resolve, style: YouthFieldTextStyle.textCount),
       ],
     );
   }

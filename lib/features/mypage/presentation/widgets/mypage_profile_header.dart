@@ -113,7 +113,7 @@ class _ProfilePhoto extends StatelessWidget {
     ImageProvider? provider;
     if (imageBytes != null) {
       provider = MemoryImage(imageBytes!);
-    } else if (imageUrl != null) {
+    } else if (imageUrl != null && imageUrl!.isNotEmpty) {
       provider = NetworkImage(imageUrl!);
     }
 

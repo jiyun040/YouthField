@@ -17,6 +17,12 @@ class MypageSkillCarousel extends StatefulWidget {
 class _MypageSkillCarouselState extends State<MypageSkillCarousel> {
   final _scrollController = ScrollController();
 
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
   static const double _cardWidth = 260;
   static const double _cardHeight = _cardWidth * 9 / 16;
   static const double _cardSpacing = 12;
