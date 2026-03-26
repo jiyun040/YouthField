@@ -111,7 +111,7 @@ class _LoginPageState extends State<LoginPage> {
                     Text(
                       '유소년 축구 선수들의 성장을 함께합니다',
                       style: YouthFieldTextStyle.placeholder.copyWith(
-                        color: YouthFieldColor.white.withOpacity(0.8),
+                        color: YouthFieldColor.white.withValues(alpha: 0.8),
                       ),
                       textAlign: TextAlign.center,
                     ),
