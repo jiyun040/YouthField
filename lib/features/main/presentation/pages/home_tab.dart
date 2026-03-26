@@ -9,6 +9,7 @@ import 'package:youthfield/features/schedule/data/repositories/schedule_reposito
 class HomeTab extends StatelessWidget {
   final VoidCallback onScheduleMoreTap;
   final ValueChanged<int> onScheduleTap;
+  final ValueChanged<String>? onPlayerTap;
 
   static const spacing20 = SizedBox(height: 20);
   static const spacing40 = SizedBox(height: 40);
@@ -17,6 +18,7 @@ class HomeTab extends StatelessWidget {
     super.key,
     required this.onScheduleMoreTap,
     required this.onScheduleTap,
+    this.onPlayerTap,
   });
 
   DateTime _parseStartDate(String dateRange) {
@@ -69,13 +71,19 @@ class HomeTab extends StatelessWidget {
                 itemCount: mockPlayers.length,
                 itemBuilder: (_, i) {
                   final p = mockPlayers[i];
-                  return PlayerCard(
-                    name: p.name,
-                    school: p.school,
-                    location: p.location,
-                    position: p.position,
-                    ageGroup: p.age,
-                    number: p.number,
+                  return MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: GestureDetector(
+                      onTap: () => onPlayerTap?.call(p.name),
+                      child: PlayerCard(
+                        name: p.name,
+                        school: p.school,
+                        location: p.location,
+                        position: p.position,
+                        ageGroup: p.age,
+                        number: p.number,
+                      ),
+                    ),
                   );
                 },
               );
