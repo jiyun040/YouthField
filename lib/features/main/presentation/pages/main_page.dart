@@ -15,6 +15,7 @@ import 'package:youthfield/features/mypage/presentation/pages/mypage_page.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import 'package:youthfield/features/schedule/presentation/pages/schedule_page.dart';
+import 'package:youthfield/features/player/data/player_mock_data.dart';
 import 'package:youthfield/features/player/presentation/pages/player_body.dart';
 import '../pages/home_tab.dart';
 import '../pages/skill_tab.dart';
@@ -356,6 +357,14 @@ class _MainPageState extends ConsumerState<MainPage> {
             _selectedScheduleIndex = index;
             _selectedTab = 3;
           }),
+          onPlayerTap: (name) {
+            final index = playerMockData.indexWhere((p) => p.name == name);
+            if (index == -1) return;
+            setState(() {
+              _selectedTab = 0;
+              _selectedPlayerIndex = index;
+            });
+          },
         );
       case 0:
         return PlayerBody(
