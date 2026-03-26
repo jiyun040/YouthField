@@ -17,7 +17,7 @@ class AuthButton extends StatelessWidget {
     required this.labelColor,
     required this.onTap,
     this.width,
-    this.height = 64,
+    this.height = 52,
     this.prefix,
   });
 
@@ -38,7 +38,7 @@ class AuthButton extends StatelessWidget {
             if (prefix != null) ...[prefix!, const SizedBox(width: 12)],
             Text(
               label,
-              style: YouthFieldTextStyle.body3.copyWith(color: labelColor),
+              style: YouthFieldTextStyle.body4.copyWith(color: labelColor),
             ),
           ],
         ),
