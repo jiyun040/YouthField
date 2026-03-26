@@ -15,6 +15,7 @@ import 'package:youthfield/features/mypage/presentation/pages/mypage_page.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import 'package:youthfield/features/schedule/presentation/pages/schedule_page.dart';
+import 'package:youthfield/features/player/presentation/pages/player_body.dart';
 import '../pages/home_tab.dart';
 import '../pages/skill_tab.dart';
 import '../widgets/main_sub_header.dart';
@@ -32,10 +33,11 @@ class MainPage extends ConsumerStatefulWidget {
 }
 
 class _MainPageState extends ConsumerState<MainPage> {
-  int _selectedTab = 0;
+  int _selectedTab = -1;
 
   final _skillTabKey = GlobalKey<SkillTabState>();
 
+  int? _selectedPlayerIndex;
   int? _selectedScheduleIndex;
 
   DiaryMode _diaryMode = DiaryMode.list;
@@ -57,7 +59,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   }
 
   double get _headerHeight {
-    if (_selectedTab == 0) return _baseHeaderHeight;
+    if (_selectedTab == -1) return _baseHeaderHeight;
     return _tabHeaderHeight;
   }
 
@@ -67,18 +69,16 @@ class _MainPageState extends ConsumerState<MainPage> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: Colors.white,
-          title: const Text(
-            '이미 로그인됨',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: Color(0xFF333333),
-            ),
+          backgroundColor: YouthFieldColor.background,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          content: const Text(
+          title: Text('이미 로그인됨', style: YouthFieldTextStyle.body4),
+          content: Text(
             '이미 로그인된 상태입니다.',
-            style: TextStyle(fontSize: 14, color: Color(0xFF707070)),
+            style: YouthFieldTextStyle.smallButton.copyWith(
+              color: YouthFieldColor.black500,
+            ),
           ),
           actionsAlignment: MainAxisAlignment.center,
           actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
@@ -107,6 +107,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   void _onTabSelected(int i) {
     setState(() {
       _selectedTab = i;
+      _selectedPlayerIndex = null;
       if (i != 2) {
         _diaryMode = DiaryMode.list;
         _selectedDiaryEntry = null;
@@ -120,7 +121,8 @@ class _MainPageState extends ConsumerState<MainPage> {
   void _onLogoTap() {
     Navigator.popUntil(context, (route) => route.isFirst);
     setState(() {
-      _selectedTab = 0;
+      _selectedTab = -1; // 홈 화면으로
+      _selectedPlayerIndex = null;
       _selectedScheduleIndex = null;
     });
   }
@@ -204,9 +206,19 @@ class _MainPageState extends ConsumerState<MainPage> {
   void _onDiaryNextWindow() =>
       setState(() => _diaryWindowStart += kDiaryWindowSize);
 
+  void _onPlayerBack() {
+    setState(() {
+      if (_selectedPlayerIndex != null) {
+        _selectedPlayerIndex = null;
+      } else {
+        _selectedTab = -1;
+      }
+    });
+  }
+
   void _onSkillBack() {
     final handled = _skillTabKey.currentState?.handleBack() ?? false;
-    if (!handled) setState(() => _selectedTab = 0);
+    if (!handled) setState(() => _selectedTab = -1);
   }
 
   void _onDiaryBack() {
@@ -215,7 +227,7 @@ class _MainPageState extends ConsumerState<MainPage> {
         _diaryMode = DiaryMode.list;
         _selectedDiaryEntry = null;
       } else {
-        _selectedTab = 0;
+        _selectedTab = -1;
       }
     });
   }
@@ -225,7 +237,7 @@ class _MainPageState extends ConsumerState<MainPage> {
       if (_selectedScheduleIndex != null) {
         _selectedScheduleIndex = null;
       } else {
-        _selectedTab = 0;
+        _selectedTab = -1;
       }
     });
   }
@@ -300,6 +312,8 @@ class _MainPageState extends ConsumerState<MainPage> {
           selectedIndex: _selectedTab,
           onTabSelected: _onTabSelected,
         ),
+        if (_selectedTab == 0)
+          MainSubHeader(title: '선수 정보', onBack: _onPlayerBack),
         if (_selectedTab == 1) MainSubHeader(title: '스킬', onBack: _onSkillBack),
         if (_selectedTab == 2)
           MainSubHeader(
@@ -335,13 +349,18 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   Widget _buildBody() {
     switch (_selectedTab) {
-      case 0:
+      case -1:
         return HomeTab(
           onScheduleMoreTap: () => setState(() => _selectedTab = 3),
           onScheduleTap: (index) => setState(() {
             _selectedScheduleIndex = index;
             _selectedTab = 3;
           }),
+        );
+      case 0:
+        return PlayerBody(
+          selectedIndex: _selectedPlayerIndex,
+          onSelect: (i) => setState(() => _selectedPlayerIndex = i),
         );
       case 1:
         return SkillTab(key: _skillTabKey);

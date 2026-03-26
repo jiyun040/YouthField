@@ -4,8 +4,12 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
+import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import 'package:youthfield/features/skill/presentation/pages/skill_page.dart';
 import 'package:youthfield/features/skill/presentation/widgets/skill_card.dart';
+
+const int kSkillPageSize = 12;
+const int kSkillWindowSize = 5;
 
 class SkillTab extends StatefulWidget {
   final ValueChanged<bool>? onSkillSelected;
@@ -21,6 +25,11 @@ class SkillTabState extends State<SkillTab> {
   int _stepIndex = 0;
   String _searchQuery = '';
   final _searchController = TextEditingController();
+  int _currentPage = 0;
+  int _windowStart = 0;
+
+  int get _totalPages =>
+      (skillMockData.length / kSkillPageSize).ceil().clamp(1, 999);
 
   bool get hasSelection => _selectedIndex != null;
 
@@ -31,12 +40,22 @@ class SkillTabState extends State<SkillTab> {
         _stepIndex = 0;
         _searchQuery = '';
         _searchController.clear();
+        _currentPage = 0;
+        _windowStart = 0;
       });
       widget.onSkillSelected?.call(false);
       return true;
     }
     return false;
   }
+
+  void _onPageTap(int page) => setState(() => _currentPage = page);
+
+  void _onPrevWindow() =>
+      setState(() => _windowStart -= kSkillWindowSize);
+
+  void _onNextWindow() =>
+      setState(() => _windowStart += kSkillWindowSize);
 
   void _select(int index) {
     setState(() {
@@ -69,6 +88,8 @@ class SkillTabState extends State<SkillTab> {
               onChanged: (val) => setState(() {
                 _searchQuery = val;
                 _selectedIndex = null;
+                _currentPage = 0;
+                _windowStart = 0;
                 widget.onSkillSelected?.call(false);
               }),
               decoration: InputDecoration(
@@ -88,6 +109,17 @@ class SkillTabState extends State<SkillTab> {
         ),
         const SizedBox(height: 20),
         _buildBody(),
+        if (_selectedIndex == null &&
+            _searchQuery.trim().isEmpty &&
+            _totalPages > 1)
+          DiaryPaginationBar(
+            currentPage: _currentPage,
+            totalPages: _totalPages,
+            windowStart: _windowStart,
+            onPageTap: _onPageTap,
+            onPrevWindow: _onPrevWindow,
+            onNextWindow: _onNextWindow,
+          ),
       ],
     );
   }
@@ -113,6 +145,10 @@ class SkillTabState extends State<SkillTab> {
 
   Widget _buildGrid() {
     const double spacing = 12;
+    final start = _currentPage * kSkillPageSize;
+    final end = (start + kSkillPageSize).clamp(0, skillMockData.length);
+    final pageItems = skillMockData.sublist(start, end);
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
       child: LayoutBuilder(
@@ -124,15 +160,16 @@ class SkillTabState extends State<SkillTab> {
           return Wrap(
             spacing: spacing,
             runSpacing: spacing,
-            children: List.generate(skillMockData.length, (i) {
-              final s = skillMockData[i];
+            children: List.generate(pageItems.length, (i) {
+              final originalIndex = start + i;
+              final s = pageItems[i];
               return SizedBox(
                 width: cardWidth,
                 height: cardHeight,
                 child: SkillCard(
                   title: s.title,
                   subtitle: s.subtitle,
-                  onTap: () => _select(i),
+                  onTap: () => _select(originalIndex),
                 ),
               );
             }),
