@@ -338,6 +338,10 @@ class _MainPageState extends ConsumerState<MainPage> {
       case 0:
         return HomeTab(
           onScheduleMoreTap: () => setState(() => _selectedTab = 3),
+          onScheduleTap: (index) => setState(() {
+            _selectedScheduleIndex = index;
+            _selectedTab = 3;
+          }),
         );
       case 1:
         return SkillTab(key: _skillTabKey);
