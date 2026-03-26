@@ -16,7 +16,7 @@ class ScheduleListItem extends StatelessWidget {
       borderRadius: BorderRadius.circular(8),
       splashColor: Colors.transparent,
       highlightColor: Colors.transparent,
-      hoverColor: YouthFieldColor.blue300.withOpacity(0.3),
+      hoverColor: YouthFieldColor.blue300.withValues(alpha: 0.3),
       onTap: onTap,
       child: Container(
         width: double.infinity,
