@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
+import 'package:youthfield/core/constants/text_style.dart';
+import 'package:youthfield/core/widgets/login_required_dialog.dart';
 import 'package:youthfield/core/widgets/yf_app_bar.dart';
 import 'package:youthfield/core/widgets/yf_menu_bar.dart';
 import 'package:youthfield/features/auth/presentation/pages/login_page.dart';
@@ -86,13 +88,24 @@ class _MainPageState extends State<MainPage> {
   }
 
   void _openMyPage() {
+    if (!_isLoggedIn) {
+      _showLoginRequiredDialog();
+      return;
+    }
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => MypagePage(
-          onDiaryMoreTap: () => setState(() => _selectedTab = 2),
-        ),
+        builder: (_) =>
+            MypagePage(onDiaryMoreTap: () => setState(() => _selectedTab = 2)),
       ),
+    );
+  }
+
+  void _showLoginRequiredDialog({String? message}) {
+    LoginRequiredDialog.show(
+      context: context,
+      subtitle: message,
+      onLogin: _openLogin,
     );
   }
 
@@ -166,7 +179,15 @@ class _MainPageState extends State<MainPage> {
                 onNextWindow: _onDiaryNextWindow,
               ),
             ),
-          Positioned(top: 0, left: 0, right: 0, child: _buildHeader()),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ColoredBox(
+              color: YouthFieldColor.background,
+              child: _buildHeader(),
+            ),
+          ),
         ],
       ),
     );
@@ -179,7 +200,13 @@ class _MainPageState extends State<MainPage> {
         YFAppBar(
           isLoggedIn: _isLoggedIn,
           onLogin: _openLogin,
-          onLogout: () => setState(() => _isLoggedIn = false),
+          onLogout: () {
+            if (!_isLoggedIn) {
+              _showLoginRequiredDialog(message: '로그인 후 로그아웃이 가능합니다.');
+              return;
+            }
+            setState(() => _isLoggedIn = false);
+          },
           onLogoTap: _onLogoTap,
           onProfileTap: _openMyPage,
         ),
@@ -203,8 +230,15 @@ class _MainPageState extends State<MainPage> {
                     splashColor: Colors.transparent,
                     highlightColor: Colors.transparent,
                     hoverColor: Colors.transparent,
-                    onPressed: () =>
-                        setState(() => _diaryMode = DiaryMode.write),
+                    onPressed: () {
+                      if (!_isLoggedIn) {
+                        _showLoginRequiredDialog(
+                          message: '일지 작성은 로그인 후 이용할 수 있습니다.',
+                        );
+                        return;
+                      }
+                      setState(() => _diaryMode = DiaryMode.write);
+                    },
                   )
                 : null,
           ),
