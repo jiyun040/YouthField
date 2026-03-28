@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:youthfield/core/widgets/yf_time_picker.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/diary/presentation/widgets/diary_condition_slider.dart';
 import 'package:youthfield/features/diary/presentation/widgets/diary_section_label.dart';
 import 'package:youthfield/features/diary/presentation/widgets/diary_sleep_time_picker.dart';
 import 'package:youthfield/features/diary/presentation/widgets/diary_submit_button.dart';
 import 'package:youthfield/features/diary/presentation/widgets/diary_text_field.dart';
-import 'package:youthfield/core/constants/color.dart';
 
 class DiaryWriteView extends StatefulWidget {
   final ValueChanged<DiaryEntry> onSave;
@@ -38,28 +38,17 @@ class _DiaryWriteViewState extends State<DiaryWriteView> {
   bool get _canSave => _contentController.text.trim().isNotEmpty;
 
   Future<void> _pickTime(bool isStart) async {
-    final picked = await showTimePicker(
+    final time = await YFTimePicker.show(
       context: context,
-      initialTime: TimeOfDay.now(),
-      builder: (context, child) {
-        return Theme(
-          data: Theme.of(context).copyWith(
-            colorScheme: const ColorScheme.light(
-              primary: YouthFieldColor.blue700,
-            ),
-          ),
-          child: child!,
-        );
-      },
+      title: isStart ? '취침시간' : '기상시간',
+      initialTime: isStart ? _sleepStart : _sleepEnd,
     );
-    if (picked != null && mounted) {
-      final formatted =
-          '${picked.hour.toString().padLeft(2, '0')}:${picked.minute.toString().padLeft(2, '0')}';
+    if (time != null && mounted) {
       setState(() {
         if (isStart) {
-          _sleepStart = formatted;
+          _sleepStart = time;
         } else {
-          _sleepEnd = formatted;
+          _sleepEnd = time;
         }
       });
     }

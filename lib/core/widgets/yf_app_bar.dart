@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:material_symbols_icons/symbols.dart';
@@ -12,6 +14,8 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
   final VoidCallback onLogout;
   final VoidCallback? onLogoTap;
   final VoidCallback? onProfileTap;
+  final Uint8List? profileImageBytes;
+  final String? profilePhotoUrl;
 
   const YFAppBar({
     super.key,
@@ -20,15 +24,17 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
     required this.onLogout,
     this.onLogoTap,
     this.onProfileTap,
+    this.profileImageBytes,
+    this.profilePhotoUrl,
   });
 
   @override
-  Size get preferredSize => const Size.fromHeight(64);
+  Size get preferredSize => const Size.fromHeight(barHeight);
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 64,
+      height: barHeight,
       color: YouthFieldColor.background,
       padding: const EdgeInsets.symmetric(horizontal: 40),
       child: Row(
@@ -67,11 +73,34 @@ class YFAppBar extends StatelessWidget implements PreferredSizeWidget {
               cursor: onProfileTap != null
                   ? SystemMouseCursors.click
                   : MouseCursor.defer,
-              child: const Icon(Symbols.sports_soccer, color: YouthFieldColor.blue700),
+              child: _buildProfileWidget(),
             ),
           ),
         ],
       ),
     );
+  }
+
+  Widget _buildProfileWidget() {
+    if (isLoggedIn) {
+      if (profileImageBytes != null) {
+        return CircleAvatar(
+          radius: 16,
+          backgroundImage: MemoryImage(profileImageBytes!),
+        );
+      }
+      if (profilePhotoUrl != null && profilePhotoUrl!.isNotEmpty) {
+        return CircleAvatar(
+          radius: 16,
+          backgroundImage: NetworkImage(profilePhotoUrl!),
+        );
+      }
+      return const CircleAvatar(
+        radius: 16,
+        backgroundColor: YouthFieldColor.blue50,
+        child: Icon(Icons.person, size: 18, color: YouthFieldColor.blue700),
+      );
+    }
+    return const Icon(Symbols.sports_soccer, color: YouthFieldColor.blue700);
   }
 }

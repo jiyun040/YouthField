@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:youthfield/core/services/user_session.dart';
+import 'package:youthfield/features/diary/data/diary_store.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/mypage/domain/entities/player_stats.dart';
 import 'package:youthfield/features/mypage/domain/entities/recent_player.dart';
@@ -181,17 +182,25 @@ class UserSessionRepository implements MypageRepository {
             redCards: 0,
           ),
           watchedSkills: const [],
-          recentDiaries: const [],
+          recentDiaries: DiaryStore().recent(),
         );
       case UserType.staff:
+        final team = s.team ?? '';
+        final roleLabel = s.staffRole;
+        final teamRole = (team.isNotEmpty && roleLabel != null)
+            ? '$team $roleLabel'
+            : team.isNotEmpty
+                ? team
+                : (roleLabel ?? '');
         return StaffProfile(
           id: 'session',
           name: name,
           profileImageBytes: bytes,
           profileImageUrl: photoUrl,
-          teamRole: s.team ?? '',
+          teamRole: teamRole,
           watchedSkills: const [],
           recentPlayers: const [],
+          recentDiaries: DiaryStore().recent(),
         );
       case UserType.general:
         return GeneralProfile(
@@ -201,6 +210,7 @@ class UserSessionRepository implements MypageRepository {
           profileImageUrl: photoUrl,
           watchedSkills: const [],
           recentPlayers: const [],
+          recentDiaries: DiaryStore().recent(),
         );
     }
   }

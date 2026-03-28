@@ -30,12 +30,15 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
   static const spacing40 = SizedBox(height: 40);
 
   String? _selectedPosition;
+  String? _selectedStaffRole;
   Uint8List? _profileImageBytes;
   UserType _userType = UserType.general;
 
   static const _positions = ['GK', 'DF', 'MF', 'FW'];
+  static const _staffRoles = ['감독', '코치'];
 
   bool get _isPlayer => _userType == UserType.player;
+  bool get _isStaff => _userType == UserType.staff;
 
   bool get _needsTeam =>
       _userType == UserType.player || _userType == UserType.staff;
@@ -49,6 +52,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
     _birthdateController = TextEditingController(text: s.birthdate ?? '');
     _resolveController = TextEditingController(text: s.resolve ?? '');
     _selectedPosition = s.position;
+    _selectedStaffRole = s.staffRole;
     _profileImageBytes = s.profileImageBytes;
     _userType = s.userType ?? UserType.general;
   }
@@ -82,13 +86,13 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
 
   void _onSave() {
     if (!_canSave) return;
+    final rawTeam = _teamController.text.trim().replaceAll(' ', '');
     UserSession().save(
       name: _nameController.text.trim(),
       userType: _userType,
       profileImageBytes: _profileImageBytes,
-      team: _teamController.text.trim().isEmpty
-          ? null
-          : _teamController.text.trim(),
+      staffRole: _isStaff ? _selectedStaffRole : null,
+      team: rawTeam.isEmpty ? null : rawTeam,
       position: _selectedPosition,
       birthdate: _birthdateController.text.trim().isEmpty
           ? null
@@ -123,11 +127,21 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
                   ),
                   if (_needsTeam) ...[
                     spacing20,
-                    _FieldLabel(_isPlayer ? '소속팀' : '소속팀 / 역할'),
+                    _FieldLabel('소속팀'),
                     spacing10,
                     AuthTextField(
                       controller: _teamController,
-                      hint: _isPlayer ? '소속팀을 입력해주세요. ex) 부산 아이파크 U15' : '소속팀 또는 역할을 입력해주세요.',
+                      hint: '소속팀을 입력해주세요. ex) 부산아이파크U15',
+                    ),
+                  ],
+                  if (_isStaff) ...[
+                    spacing20,
+                    _FieldLabel('역할'),
+                    spacing10,
+                    _PositionSelector(
+                      positions: _staffRoles,
+                      selected: _selectedStaffRole,
+                      onSelect: (r) => setState(() => _selectedStaffRole = r),
                     ),
                   ],
                   if (_isPlayer) ...[

@@ -4,7 +4,11 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
+import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import '../widgets/skill_card.dart';
+
+const int kSkillPageSize = 4;
+const int kSkillWindowSize = 5;
 
 class SkillStep {
   final String title;
@@ -160,12 +164,44 @@ class _SkillPageState extends State<SkillPage> {
   int _selectedStepIndex = 0;
   String _searchQuery = '';
   final _searchController = TextEditingController();
+  int _currentPage = 0;
+  int _windowStart = 0;
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
   }
+
+  List<MapEntry<int, SkillData>> get _filteredSkills {
+    final query = _searchQuery.trim().toLowerCase();
+    final result = <MapEntry<int, SkillData>>[];
+    for (var i = 0; i < skillMockData.length; i++) {
+      final s = skillMockData[i];
+      if (query.isEmpty ||
+          s.title.toLowerCase().contains(query) ||
+          s.subtitle.toLowerCase().contains(query)) {
+        result.add(MapEntry(i, s));
+      }
+    }
+    return result;
+  }
+
+  int get _totalPages {
+    final n = _filteredSkills.length;
+    if (n == 0) return 1;
+    return (n / kSkillPageSize).ceil();
+  }
+
+  void _onPageTap(int page) {
+    setState(() {
+      _currentPage = page;
+      _windowStart = (page ~/ kSkillWindowSize) * kSkillWindowSize;
+    });
+  }
+
+  void _onPrevWindow() => setState(() => _windowStart -= kSkillWindowSize);
+  void _onNextWindow() => setState(() => _windowStart += kSkillWindowSize);
 
   @override
   Widget build(BuildContext context) {
@@ -178,7 +214,27 @@ class _SkillPageState extends State<SkillPage> {
             _buildHeader(),
             _buildSearchBar(),
             const SizedBox(height: 20),
-            Expanded(child: SingleChildScrollView(child: _buildContent())),
+            Expanded(
+              child: Stack(
+                children: [
+                  SingleChildScrollView(child: _buildContent()),
+                  if (_selectedIndex == null && _totalPages > 1)
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      child: DiaryPaginationBar(
+                        currentPage: _currentPage,
+                        totalPages: _totalPages,
+                        windowStart: _windowStart,
+                        onPageTap: _onPageTap,
+                        onPrevWindow: _onPrevWindow,
+                        onNextWindow: _onNextWindow,
+                      ),
+                    ),
+                ],
+              ),
+            ),
           ],
         ),
       ),
@@ -242,15 +298,19 @@ class _SkillPageState extends State<SkillPage> {
           onChanged: (val) => setState(() {
             _searchQuery = val;
             _selectedIndex = null;
+            _currentPage = 0;
+            _windowStart = 0;
           }),
+          style: YouthFieldTextStyle.placeholder.copyWith(
+            color: YouthFieldColor.black800,
+          ),
           decoration: InputDecoration(
             hintText: '배우고 싶은 스킬을 검색하세요.',
             hintStyle: YouthFieldTextStyle.placeholder
                 .copyWith(color: YouthFieldColor.black500),
             border: InputBorder.none,
             isDense: true,
-            contentPadding:
-                const EdgeInsets.all(20),
+            contentPadding: const EdgeInsets.all(16),
           ),
         ),
       ),
@@ -262,32 +322,31 @@ class _SkillPageState extends State<SkillPage> {
       return _buildDetail(skillMockData[_selectedIndex!]);
     }
 
-    final query = _searchQuery.trim().toLowerCase();
-    if (query.isNotEmpty) {
-      final results = <MapEntry<int, SkillData>>[];
-      for (var i = 0; i < skillMockData.length; i++) {
-        final s = skillMockData[i];
-        if (s.title.toLowerCase().contains(query) ||
-            s.subtitle.toLowerCase().contains(query)) {
-          results.add(MapEntry(i, s));
-        }
-      }
-      return _buildSearchResults(results);
+    final filtered = _filteredSkills;
+    if (filtered.isEmpty) {
+      return const Padding(
+        padding: EdgeInsets.symmetric(vertical: 60),
+        child: Center(child: Text('검색 결과가 없습니다.')),
+      );
     }
 
-    return _buildGrid();
+    final totalPages = _totalPages;
+    final start = _currentPage * kSkillPageSize;
+    final end = (start + kSkillPageSize).clamp(0, filtered.length);
+    final pageItems = filtered.sublist(start, end);
+    return _buildGrid(pageItems, totalPages);
   }
 
-  Widget _buildGrid() {
+  Widget _buildGrid(List<MapEntry<int, SkillData>> items, int totalPages) {
     const double cardWidth = 260;
     const double cardHeight = cardWidth * 9 / 16;
     return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
+      padding: EdgeInsets.fromLTRB(24, 0, 24, totalPages > 1 ? 72 : 40),
       child: Wrap(
         spacing: 12,
         runSpacing: 12,
-        children: List.generate(skillMockData.length, (i) {
-          final s = skillMockData[i];
+        children: items.map((entry) {
+          final s = entry.value;
           return SizedBox(
             width: cardWidth,
             height: cardHeight,
@@ -295,61 +354,13 @@ class _SkillPageState extends State<SkillPage> {
               title: s.title,
               subtitle: s.subtitle,
               onTap: () => setState(() {
-                _selectedIndex = i;
+                _selectedIndex = entry.key;
                 _selectedStepIndex = 0;
               }),
             ),
           );
-        }),
+        }).toList(),
       ),
-    );
-  }
-
-  Widget _buildSearchResults(List<MapEntry<int, SkillData>> results) {
-    if (results.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 60),
-        child: Center(child: Text('검색 결과가 없습니다.')),
-      );
-    }
-    return Column(
-      children: results.map((entry) {
-        final s = entry.value;
-        return InkWell(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          hoverColor: YouthFieldColor.blue50,
-          onTap: () => setState(() {
-            _selectedIndex = entry.key;
-            _selectedStepIndex = 0;
-            _searchQuery = '';
-            _searchController.clear();
-          }),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(s.title,
-                          style: YouthFieldTextStyle.body4
-                              .copyWith(color: YouthFieldColor.black800)),
-                      const SizedBox(height: 2),
-                      Text(s.subtitle,
-                          style: YouthFieldTextStyle.placeholder
-                              .copyWith(color: YouthFieldColor.black500)),
-                    ],
-                  ),
-                ),
-                const Icon(Symbols.chevron_right,
-                    color: YouthFieldColor.black500, size: 20),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
     );
   }
 

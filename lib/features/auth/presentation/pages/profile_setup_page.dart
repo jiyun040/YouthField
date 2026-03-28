@@ -97,13 +97,20 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
       _UserRole.fan => UserType.general,
     };
 
+    final staffRole = switch (_selectedRole!) {
+      _UserRole.manager => '감독',
+      _UserRole.coach => '코치',
+      _ => null,
+    };
+
     UserSession().save(
       name: _nameController.text.trim(),
       userType: userType,
       profileImageBytes: setupState.profileImageBytes,
+      staffRole: staffRole,
       team: _teamController.text.trim().isEmpty
           ? null
-          : _teamController.text.trim(),
+          : _teamController.text.trim().replaceAll(' ', ''),
       position: setupState.position,
       birthdate: _birthdateController.text.trim().isEmpty
           ? null
@@ -250,7 +257,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
                                     _Spacing.h10,
                                     AuthTextField(
                                       controller: _teamController,
-                                      hint: '소속팀을 입력해주세요. ex) 부산 아이파크 U15',
+                                      hint: '소속팀을 입력해주세요. ex) 부산아이파크U15',
                                     ),
                                   ],
                                   if (_isPlayer) ...[

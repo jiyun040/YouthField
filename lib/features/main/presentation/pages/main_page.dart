@@ -10,8 +10,9 @@ import 'package:youthfield/core/widgets/login_required_dialog.dart';
 import 'package:youthfield/core/widgets/yf_app_bar.dart';
 import 'package:youthfield/core/widgets/yf_menu_bar.dart';
 import 'package:youthfield/features/auth/presentation/pages/login_page.dart';
-import 'package:youthfield/features/diary/data/repositories/diary_repository_impl.dart';
+import 'package:youthfield/features/diary/data/diary_store.dart';
 import 'package:youthfield/features/mypage/presentation/pages/mypage_page.dart';
+import 'package:youthfield/features/mypage/presentation/providers/mypage_provider.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import 'package:youthfield/features/schedule/presentation/pages/schedule_page.dart';
@@ -43,9 +44,10 @@ class _MainPageState extends ConsumerState<MainPage> {
 
   DiaryMode _diaryMode = DiaryMode.list;
   DiaryEntry? _selectedDiaryEntry;
-  late List<DiaryEntry> _diaryEntries;
   int _diaryCurrentPage = 0;
   int _diaryWindowStart = 0;
+
+  List<DiaryEntry> get _diaryEntries => DiaryStore().entries.toList();
 
   int get _diaryTotalPages {
     final n = _diaryEntries.length;
@@ -56,7 +58,12 @@ class _MainPageState extends ConsumerState<MainPage> {
   @override
   void initState() {
     super.initState();
-    _diaryEntries = List.from(diaryMockEntries);
+    _loadSession();
+  }
+
+  Future<void> _loadSession() async {
+    await UserSession().loadFromPrefs();
+    if (mounted) setState(() {});
   }
 
   double get _headerHeight {
@@ -70,7 +77,7 @@ class _MainPageState extends ConsumerState<MainPage> {
       showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          backgroundColor: YouthFieldColor.background,
+          backgroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -134,6 +141,7 @@ class _MainPageState extends ConsumerState<MainPage> {
       _showLoginRequiredDialog();
       return;
     }
+    ref.invalidate(myProfileProvider);
     Navigator.push(
       context,
       MaterialPageRoute(
@@ -179,10 +187,10 @@ class _MainPageState extends ConsumerState<MainPage> {
           const SizedBox(width: 20),
           TextButton(
             style: TextButton.styleFrom(overlayColor: Colors.transparent),
-            onPressed: () {
+            onPressed: () async {
               Navigator.pop(ctx);
-              UserSession().clear();
-              FirebaseAuth.instance.signOut();
+              await UserSession().clear();
+              await FirebaseAuth.instance.signOut();
             },
             child: Text(
               '로그아웃',
@@ -291,7 +299,8 @@ class _MainPageState extends ConsumerState<MainPage> {
   }
 
   Widget _buildHeader() {
-    final isLoggedIn = ref.watch(authStateProvider).value != null;
+    final firebaseUser = ref.watch(authStateProvider).value;
+    final isLoggedIn = firebaseUser != null;
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -307,6 +316,8 @@ class _MainPageState extends ConsumerState<MainPage> {
           },
           onLogoTap: _onLogoTap,
           onProfileTap: _openMyPage,
+          profileImageBytes: isLoggedIn ? UserSession().profileImageBytes : null,
+          profilePhotoUrl: isLoggedIn ? firebaseUser.photoURL : null,
         ),
         YFMenuBar(
           tabs: _tabs,
@@ -384,7 +395,7 @@ class _MainPageState extends ConsumerState<MainPage> {
             _diaryMode = DiaryMode.detail;
           }),
           onSave: (entry) => setState(() {
-            _diaryEntries.insert(0, entry);
+            DiaryStore().add(entry);
             _diaryMode = DiaryMode.list;
             _diaryCurrentPage = 0;
             _diaryWindowStart = 0;
