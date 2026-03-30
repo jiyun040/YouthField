@@ -57,7 +57,7 @@ class ScheduleListItem extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             const Icon(
-              Symbols.chevron_right,
+              Symbols.arrow_forward_ios,
               color: YouthFieldColor.black500,
               size: 20,
             ),

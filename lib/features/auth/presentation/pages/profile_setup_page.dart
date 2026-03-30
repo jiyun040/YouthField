@@ -160,7 +160,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
             left: 16,
             child: IconButton(
               icon: const Icon(
-                Symbols.chevron_left,
+                Symbols.arrow_back_ios,
                 color: YouthFieldColor.white,
                 size: 36,
               ),

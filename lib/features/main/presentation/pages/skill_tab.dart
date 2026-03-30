@@ -225,7 +225,7 @@ class SkillTabState extends State<SkillTab> {
                   ),
                 ),
                 const Icon(
-                  Symbols.chevron_right,
+                  Symbols.arrow_back_ios,
                   color: YouthFieldColor.black500,
                   size: 20,
                 ),

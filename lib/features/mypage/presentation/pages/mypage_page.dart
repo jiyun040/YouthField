@@ -70,7 +70,7 @@ class _MypagePageState extends ConsumerState<MypagePage> {
               alignment: Alignment.centerLeft,
               child: IconButton(
                 icon: const Icon(
-                  Symbols.chevron_left,
+                  Symbols.arrow_back_ios,
                   color: YouthFieldColor.blue700,
                   size: 32,
                 ),

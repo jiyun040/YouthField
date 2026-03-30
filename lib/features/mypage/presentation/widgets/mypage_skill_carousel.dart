@@ -62,7 +62,7 @@ class _MypageSkillCarouselState extends State<MypageSkillCarousel> {
         const SizedBox(height: 10),
         Row(
           children: [
-            _ArrowButton(icon: Symbols.chevron_left, onTap: _scrollLeft),
+            _ArrowButton(icon: Symbols.arrow_back_ios, onTap: _scrollLeft),
             const SizedBox(width: 4),
             Expanded(
               child: SingleChildScrollView(
@@ -88,7 +88,7 @@ class _MypageSkillCarouselState extends State<MypageSkillCarousel> {
               ),
             ),
             const SizedBox(width: 4),
-            _ArrowButton(icon: Symbols.chevron_right, onTap: _scrollRight),
+            _ArrowButton(icon: Symbols.arrow_back_ios, onTap: _scrollRight),
           ],
         ),
       ],

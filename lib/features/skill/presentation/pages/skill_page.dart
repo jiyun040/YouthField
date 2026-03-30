@@ -260,7 +260,7 @@ class _SkillPageState extends State<SkillPage> {
             child: Align(
               alignment: Alignment.centerLeft,
               child: IconButton(
-                icon: const Icon(Symbols.chevron_left,
+                icon: const Icon(Symbols.arrow_back_ios,
                     color: YouthFieldColor.blue700, size: 32),
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,

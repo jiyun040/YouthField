@@ -49,7 +49,7 @@ class YFTitleBar extends StatelessWidget implements PreferredSizeWidget {
               child: IconButton(
                 onPressed: onBack ?? () => Navigator.maybePop(context),
                 icon: const Icon(
-                  Symbols.chevron_left,
+                  Symbols.arrow_back_ios,
                   color: YouthFieldColor.blue700,
                   size: 32,
                 ),
