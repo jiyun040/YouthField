@@ -88,7 +88,7 @@ class _MypageSkillCarouselState extends State<MypageSkillCarousel> {
               ),
             ),
             const SizedBox(width: 4),
-            _ArrowButton(icon: Symbols.arrow_back_ios, onTap: _scrollRight),
+            _ArrowButton(icon: Symbols.arrow_forward_ios, onTap: _scrollRight),
           ],
         ),
       ],
