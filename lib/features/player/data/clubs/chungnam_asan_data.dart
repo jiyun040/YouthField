@@ -1,0 +1,128 @@
+import 'package:youthfield/features/mypage/domain/entities/player_stats.dart';
+import 'package:youthfield/features/player/domain/entities/player_info.dart';
+
+const _zero = PlayerStats(
+  appearances: 0,
+  goals: 0,
+  assists: 0,
+  yellowCards: 0,
+  redCards: 0,
+);
+
+String _bd(int num, int baseYear) {
+  final y = baseYear + (num % 3);
+  final m = ((num * 3) % 12) + 1;
+  final d = ((num * 7) % 28) + 1;
+  return "$y.${m.toString().padLeft(2, '0')}.${d.toString().padLeft(2, '0')}";
+}
+
+const _loc = '충청남도 아산시';
+
+PlayerInfo _u18(String name, String pos, int num, String imgUrl) => PlayerInfo(
+  name: name,
+  school: '충남아산FC U-18',
+  location: _loc,
+  position: pos,
+  ageGroup: 'U-18',
+  number: num,
+  birthdate: _bd(num, 2007),
+  seasonStats: _zero,
+  nationalStats: _zero,
+  imageUrl: imgUrl,
+);
+
+PlayerInfo _u15(String name, String pos, int num, String imgUrl) => PlayerInfo(
+  name: name,
+  school: '충남아산FC U-15',
+  location: _loc,
+  position: pos,
+  ageGroup: 'U-15',
+  number: num,
+  birthdate: _bd(num, 2010),
+  seasonStats: _zero,
+  nationalStats: _zero,
+  imageUrl: imgUrl,
+);
+
+final List<PlayerInfo> chungnamAsanPlayers = [
+  _u18('공다훈', 'GK', 1, 'https://www.asanfc.com/updata/player/PFKEC6.jpg'),
+  _u18('양준혁', 'GK', 21, 'https://www.asanfc.com/updata/player/eFIuZH.jpg'),
+  _u18('추현욱', 'GK', 31, 'https://www.asanfc.com/updata/player/IXPjWv.jpg'),
+  _u18('윤채민', 'DF', 2, 'https://www.asanfc.com/updata/player/Wu4lGO.jpg'),
+  _u18('연해솔', 'DF', 3, 'https://www.asanfc.com/updata/player/GUP3v6.jpg'),
+  _u18('권도연', 'DF', 4, 'https://www.asanfc.com/updata/player/IIsyNP.jpg'),
+  _u18('정원희', 'DF', 5, 'https://www.asanfc.com/updata/player/Gx7g4J.jpg'),
+  _u18('김서준', 'DF', 6, 'https://www.asanfc.com/updata/player/AuHoqZ.jpg'),
+  _u18('김서진', 'DF', 11, 'https://www.asanfc.com/updata/player/fSvuG8.jpg'),
+  _u18('박상현', 'DF', 15, 'https://www.asanfc.com/updata/player/IqZSi5.jpg'),
+  _u18('소윤우', 'DF', 20, 'https://www.asanfc.com/updata/player/IR9V1Z.jpg'),
+  _u18('김승현', 'DF', 22, 'https://www.asanfc.com/updata/player/QiUgG7.jpg'),
+  _u18('배주현', 'DF', 23, 'https://www.asanfc.com/updata/player/HK8ZYB.jpg'),
+  _u18('이은호', 'DF', 24, 'https://www.asanfc.com/updata/player/AE5tW2.jpg'),
+  _u18('조병현', 'DF', 26, 'https://www.asanfc.com/updata/player/HG81bh.jpg'),
+  _u18('김세훈', 'DF', 30, 'https://www.asanfc.com/updata/player/Rm6I5F.jpg'),
+  _u18('현승민', 'DF', 34, 'https://www.asanfc.com/updata/player/m5nxJz.jpg'),
+  _u18('오예준', 'MF', 7, 'https://www.asanfc.com/updata/player/RuVAmh.jpg'),
+  _u18('정명헌', 'MF', 8, 'https://www.asanfc.com/updata/player/xSVJHS.jpg'),
+  _u18('한재희', 'MF', 10, 'https://www.asanfc.com/updata/player/C4bX2u.jpg'),
+  _u18('박하율', 'MF', 13, 'https://www.asanfc.com/updata/player/KuydCC.jpg'),
+  _u18('홍예준', 'MF', 14, 'https://www.asanfc.com/updata/player/v9bpu7.jpg'),
+  _u18('정하율', 'MF', 16, 'https://www.asanfc.com/updata/player/0kQmgq.jpg'),
+  _u18('최재원', 'MF', 25, 'https://www.asanfc.com/updata/player/j2Recx.jpg'),
+  _u18('노우준', 'MF', 28, 'https://www.asanfc.com/updata/player/iyheC0.jpg'),
+  _u18('임동욱', 'MF', 33, 'https://www.asanfc.com/updata/player/XNPWE8.jpg'),
+  _u18('윤승욱', 'MF', 35, 'https://www.asanfc.com/updata/player/muR1dR.jpg'),
+  _u18('민지성', 'MF', 36, 'https://www.asanfc.com/updata/player/0CUMxw.jpg'),
+  _u18('권상현', 'MF', 37, 'https://www.asanfc.com/updata/player/rgypwE.jpg'),
+  _u18('김진서', 'FW', 9, 'https://www.asanfc.com/updata/player/ZGDav7.jpg'),
+  _u18('김찬영', 'FW', 12, 'https://www.asanfc.com/updata/player/3IQysE.jpg'),
+  _u18('김영호', 'FW', 17, 'https://www.asanfc.com/updata/player/Rz0rHl.jpg'),
+  _u18('김선우', 'FW', 18, 'https://www.asanfc.com/updata/player/R9VMBG.jpg'),
+  _u18('양원영', 'FW', 19, 'https://www.asanfc.com/updata/player/p13dVE.jpg'),
+  _u18('김형주', 'FW', 27, 'https://www.asanfc.com/updata/player/Nliv4B.jpg'),
+  _u18('이찬영', 'FW', 29, 'https://www.asanfc.com/updata/player/p8DmzE.jpg'),
+  _u18('이다로', 'FW', 32, 'https://www.asanfc.com/updata/player/EpyJK7.jpg'),
+  _u18('심기훈', 'FW', 39, 'https://www.asanfc.com/updata/player/2S6A49.jpg'),
+
+  _u15('김민성', 'GK', 1, 'https://www.asanfc.com/updata/player/dprFUo.jpg'),
+  _u15('김도윤', 'GK', 21, 'https://www.asanfc.com/updata/player/6G66D5.jpg'),
+  _u15('손채환', 'GK', 31, 'https://www.asanfc.com/updata/player/06AUz4.jpg'),
+  _u15('전윤건', 'GK', 41, 'https://www.asanfc.com/updata/player/Xdnry7.jpg'),
+  _u15('이재범', 'DF', 2, 'https://www.asanfc.com/updata/player/fhIN0g.jpg'),
+  _u15('이선일', 'DF', 3, 'https://www.asanfc.com/updata/player/MBCW5X.jpg'),
+  _u15('송승환', 'DF', 5, 'https://www.asanfc.com/updata/player/LKPNgW.jpg'),
+  _u15('박수호', 'DF', 6, 'https://www.asanfc.com/updata/player/k6f510.jpg'),
+  _u15('허은찬', 'DF', 13, 'https://www.asanfc.com/updata/player/fvEB18.jpg'),
+  _u15('윤성민', 'DF', 15, 'https://www.asanfc.com/updata/player/WBCIUy.jpg'),
+  _u15('박석진', 'DF', 16, 'https://www.asanfc.com/updata/player/u5b2sy.jpg'),
+  _u15('조용진', 'DF', 20, 'https://www.asanfc.com/updata/player/TFLUjk.jpg'),
+  _u15('전승익', 'DF', 22, 'https://www.asanfc.com/updata/player/lYvTrP.jpg'),
+  _u15('이한울', 'DF', 25, 'https://www.asanfc.com/updata/player/07RBd1.jpg'),
+  _u15('박기훈', 'DF', 30, 'https://www.asanfc.com/updata/player/vQOGHp.jpg'),
+  _u15('고재혁', 'DF', 33, 'https://www.asanfc.com/updata/player/CPDYd3.jpg'),
+  _u15('신현우', 'DF', 35, 'https://www.asanfc.com/updata/player/ICGAdy.jpg'),
+  _u15('신주호', 'DF', 36, 'https://www.asanfc.com/updata/player/StM9Wc.jpg'),
+  _u15('이성율', 'DF', 39, 'https://www.asanfc.com/updata/player/Hs55J6.jpg'),
+  _u15('정서진', 'MF', 4, 'https://www.asanfc.com/updata/player/ZEUcV0.jpg'),
+  _u15('신재훈', 'MF', 8, 'https://www.asanfc.com/updata/player/LUeVid.jpg'),
+  _u15('이진혁', 'MF', 9, 'https://www.asanfc.com/updata/player/GLW7lP.jpg'),
+  _u15('박찬유', 'MF', 12, 'https://www.asanfc.com/updata/player/xkGrSt.jpg'),
+  _u15('엄유겸', 'MF', 14, 'https://www.asanfc.com/updata/player/EdRYw2.jpg'),
+  _u15('조시훈', 'MF', 17, 'https://www.asanfc.com/updata/player/CrkM0f.jpg'),
+  _u15('박성진', 'MF', 18, 'https://www.asanfc.com/updata/player/bTBpHV.jpg'),
+  _u15('유승훈', 'MF', 19, 'https://www.asanfc.com/updata/player/ZDo3zR.jpg'),
+  _u15('정지우', 'MF', 23, 'https://www.asanfc.com/updata/player/ZnNW4R.jpg'),
+  _u15('조재영', 'MF', 26, 'https://www.asanfc.com/updata/player/3M62hz.jpg'),
+  _u15('남우혁', 'MF', 28, 'https://www.asanfc.com/updata/player/n3B5Sd.jpg'),
+  _u15('노윤재', 'MF', 29, 'https://www.asanfc.com/updata/player/nfWIy0.jpg'),
+  _u15('한호진', 'MF', 32, 'https://www.asanfc.com/updata/player/KIlimB.jpg'),
+  _u15('우하준', 'MF', 37, 'https://www.asanfc.com/updata/player/6EJZnm.jpg'),
+  _u15('권동호', 'FW', 7, 'https://www.asanfc.com/updata/player/KPrJNZ.jpg'),
+  _u15('정주원', 'FW', 10, 'https://www.asanfc.com/updata/player/AXLkrc.jpg'),
+  _u15('이혜성', 'FW', 11, 'https://www.asanfc.com/updata/player/ZspJTZ.jpg'),
+  _u15('김채건', 'FW', 24, 'https://www.asanfc.com/updata/player/3E5AFs.jpg'),
+  _u15('강예준', 'FW', 27, 'https://www.asanfc.com/updata/player/SkY3Y4.jpg'),
+  _u15('김건후', 'FW', 34, 'https://www.asanfc.com/updata/player/7GxhMV.jpg'),
+  _u15('허윤준', 'FW', 38, 'https://www.asanfc.com/updata/player/ISzS5Z.jpg'),
+  _u15('안우성', 'FW', 40, 'https://www.asanfc.com/updata/player/gETrPW.jpg'),
+];
