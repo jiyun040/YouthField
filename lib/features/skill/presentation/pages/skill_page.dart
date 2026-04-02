@@ -12,7 +12,6 @@ import '../widgets/skill_card.dart';
 const int kSkillPageSize = 8;
 const int kSkillWindowSize = 5;
 
-// 기존 SkillData / skillMockData — 하위 호환성을 위해 유지
 class SkillStep {
   final String title;
   final String description;
@@ -34,7 +33,6 @@ class SkillData {
 
 const List<SkillData> skillMockData = [];
 
-// ─────────────────────────────────────────────
 
 class SkillPage extends ConsumerStatefulWidget {
   const SkillPage({super.key});
@@ -175,8 +173,10 @@ class _SkillPageState extends ConsumerState<SkillPage> {
     }
 
     final totalPages = (videos.length / kSkillPageSize).ceil();
-    final start = _currentPage * kSkillPageSize;
-    final end = (start + kSkillPageSize).clamp(0, videos.length);
+    final safePage = _currentPage.clamp(0, totalPages - 1).toInt();
+    final safeWindowStart = (safePage ~/ kSkillWindowSize) * kSkillWindowSize;
+    final start = safePage * kSkillPageSize;
+    final end = (start + kSkillPageSize).clamp(0, videos.length).toInt();
     final pageItems = videos.sublist(start, end);
 
     return Stack(
@@ -208,9 +208,9 @@ class _SkillPageState extends ConsumerState<SkillPage> {
             left: 0,
             right: 0,
             child: DiaryPaginationBar(
-              currentPage: _currentPage,
+              currentPage: safePage,
               totalPages: totalPages,
-              windowStart: _windowStart,
+              windowStart: safeWindowStart,
               onPageTap: _onPageTap,
               onPrevWindow: _onPrevWindow,
               onNextWindow: _onNextWindow,

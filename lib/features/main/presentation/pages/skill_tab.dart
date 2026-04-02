@@ -26,7 +26,6 @@ class SkillTabState extends ConsumerState<SkillTab> {
   int _currentPage = 0;
   int _windowStart = 0;
 
-  // 외부(main_page)에서 back 버튼 눌렀을 때 호출
   bool handleBack() => false;
   bool get hasSelection => false;
 
@@ -69,7 +68,6 @@ class SkillTabState extends ConsumerState<SkillTab> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        // 검색바
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           child: Container(
@@ -102,7 +100,6 @@ class SkillTabState extends ConsumerState<SkillTab> {
           ),
         ),
         const SizedBox(height: 20),
-        // 콘텐츠 (SingleChildScrollView 안에 있으므로 Expanded 사용 불가)
         videosAsync.when(
           loading: () => const SizedBox(
             height: 200,
@@ -160,8 +157,10 @@ class SkillTabState extends ConsumerState<SkillTab> {
     }
 
     final totalPages = (videos.length / kSkillPageSize).ceil();
-    final start = _currentPage * kSkillPageSize;
-    final end = (start + kSkillPageSize).clamp(0, videos.length);
+    final safePage = _currentPage.clamp(0, totalPages - 1).toInt();
+    final safeWindowStart = (safePage ~/ kSkillWindowSize) * kSkillWindowSize;
+    final start = safePage * kSkillPageSize;
+    final end = (start + kSkillPageSize).clamp(0, videos.length).toInt();
     final pageItems = videos.sublist(start, end);
 
     return Column(
@@ -197,9 +196,9 @@ class SkillTabState extends ConsumerState<SkillTab> {
         ),
         if (totalPages > 1)
           DiaryPaginationBar(
-            currentPage: _currentPage,
+            currentPage: safePage,
             totalPages: totalPages,
-            windowStart: _windowStart,
+            windowStart: safeWindowStart,
             onPageTap: _onPageTap,
             onPrevWindow: _onPrevWindow,
             onNextWindow: _onNextWindow,

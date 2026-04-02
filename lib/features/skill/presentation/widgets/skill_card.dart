@@ -19,76 +19,72 @@ class SkillCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MouseRegion(
-      cursor: SystemMouseCursors.click,
-      child: GestureDetector(
-        onTap: onTap,
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // 썸네일
-              if (thumbnailUrl != null)
-                CachedNetworkImage(
-                  imageUrl: thumbnailUrl!,
-                  fit: BoxFit.cover,
-                  placeholder: (_, __) => _placeholder(),
-                  errorWidget: (_, __, ___) => _placeholder(),
-                )
-              else
-                _placeholder(),
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Stack(
+          fit: StackFit.expand,
+          children: [
+            if (thumbnailUrl != null)
+              CachedNetworkImage(
+                imageUrl: thumbnailUrl!,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => _placeholder(),
+                errorWidget: (_, __, ___) => _placeholder(),
+              )
+            else
+              _placeholder(),
 
-              // 그라디언트 오버레이
-              const DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Colors.transparent, Color(0xDD000000)],
+            const DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [Colors.transparent, Color(0xDD000000)],
+                ),
+              ),
+            ),
+
+            Positioned(
+              left: 12,
+              right: 12,
+              bottom: 12,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    title,
+                    style: YouthFieldTextStyle.body4.copyWith(
+                      color: YouthFieldColor.white,
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-                ),
-              ),
-
-              // 제목/채널명
-              Positioned(
-                left: 12,
-                right: 12,
-                bottom: 12,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      title,
-                      style: YouthFieldTextStyle.body4.copyWith(
-                        color: YouthFieldColor.white,
-                        fontWeight: FontWeight.w700,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: YouthFieldTextStyle.smallButton.copyWith(
+                      color: YouthFieldColor.white.withValues(alpha: 0.8),
+                      fontWeight: FontWeight.w400,
                     ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: YouthFieldTextStyle.smallButton.copyWith(
-                        color: YouthFieldColor.white.withValues(alpha: 0.8),
-                        fontWeight: FontWeight.w400,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ],
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _placeholder() => Container(
+  Widget _placeholder() =>
+      Container(
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
