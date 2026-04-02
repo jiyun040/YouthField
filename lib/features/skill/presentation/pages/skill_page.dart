@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
+import 'package:youthfield/features/skill/data/models/youtube_video.dart';
+import 'package:youthfield/features/skill/presentation/providers/skill_provider.dart';
 import '../widgets/skill_card.dart';
 
-const int kSkillPageSize = 4;
+const int kSkillPageSize = 8;
 const int kSkillWindowSize = 5;
 
 class SkillStep {
   final String title;
   final String description;
-
   const SkillStep({required this.title, required this.description});
 }
 
@@ -22,7 +23,6 @@ class SkillData {
   final String subtitle;
   final List<SkillStep> steps;
   final String? youtubeUrl;
-
   const SkillData({
     required this.title,
     required this.subtitle,
@@ -31,138 +31,17 @@ class SkillData {
   });
 }
 
-const List<SkillData> skillMockData = [
-  SkillData(
-    title: '피지컬',
-    subtitle: '경기 중에서 오래 뛸 수 있는 방법',
-    steps: [
-      SkillStep(
-        title: '준비운동',
-        description:
-            '훈련 전 10분 이상 스트레칭으로 근육을 풀어주세요.\n관절 가동범위를 충분히 확보한 후 본 훈련을 시작하세요.',
-      ),
-      SkillStep(
-        title: '유산소 훈련',
-        description:
-            '꾸준한 달리기로 심폐 지구력을 키우세요.\n인터벌 트레이닝을 통해 경기 강도에 맞는 체력을 쌓으세요.',
-      ),
-      SkillStep(
-        title: '마무리 스트레칭',
-        description:
-            '훈련 후 쿨다운 스트레칭으로 피로를 풀어주세요.\n충분한 수분 섭취로 근육 회복을 도와주세요.',
-      ),
-    ],
-    youtubeUrl: 'https://youtube.com',
-  ),
-  SkillData(
-    title: '드리블',
-    subtitle: '상대를 제치는 드리블 기술',
-    steps: [
-      SkillStep(
-        title: '기본 터치',
-        description: '발 안쪽으로 공을 부드럽게 컨트롤하세요.\n양발을 고르게 사용하는 습관을 들이세요.',
-      ),
-      SkillStep(
-        title: '방향 전환',
-        description:
-            '빠른 방향 전환이 드리블의 핵심입니다.\n무게 중심을 낮추고 순간적으로 방향을 바꾸세요.',
-      ),
-      SkillStep(
-        title: '1대1 돌파',
-        description:
-            '상대의 무게 중심을 읽고 빈 공간을 공략하세요.\n속도 변화로 수비수의 타이밍을 흔드세요.',
-      ),
-    ],
-  ),
-  SkillData(
-    title: '슈팅',
-    subtitle: '정확한 슈팅 자세 교정',
-    steps: [
-      SkillStep(
-        title: '발 위치',
-        description:
-            '디딤발을 공 옆에 적절히 위치시켜 균형을 잡으세요.\n디딤발 방향이 슈팅 방향을 결정합니다.',
-      ),
-      SkillStep(
-        title: '임팩트 포인트',
-        description:
-            '발등 중앙으로 공을 맞추는 것이 기본입니다.\n임팩트 순간 발목을 고정하고 몸무게를 실어주세요.',
-      ),
-    ],
-    youtubeUrl: 'https://youtube.com',
-  ),
-  SkillData(
-    title: '패스',
-    subtitle: '팀원과의 연계 패스 훈련',
-    steps: [
-      SkillStep(
-        title: '숏패스',
-        description:
-            '짧은 거리 패스부터 차근차근 연습하세요.\n발 안쪽 면으로 정확하게 전달하는 것이 우선입니다.',
-      ),
-      SkillStep(
-        title: '시선 페이크',
-        description:
-            '시선으로 상대를 속인 후 반대 방향으로 패스하세요.\n눈과 몸의 방향을 분리하는 연습이 필요합니다.',
-      ),
-      SkillStep(
-        title: '원터치 패스',
-        description:
-            '원터치 패스로 빠른 전개를 만드세요.\n공이 오기 전 미리 다음 패스 방향을 결정하세요.',
-      ),
-    ],
-  ),
-  SkillData(
-    title: '헤딩',
-    subtitle: '공중볼 처리와 헤딩 훈련',
-    steps: [
-      SkillStep(
-        title: '점프 타이밍',
-        description:
-            '공의 궤적을 미리 읽고 최적의 타이밍에 도약하세요.\n점프 타이밍이 헤딩의 성패를 가릅니다.',
-      ),
-      SkillStep(
-        title: '임팩트',
-        description:
-            '이마 중앙으로 공을 정확하게 받으세요.\n눈을 감지 말고 공을 끝까지 응시하세요.',
-      ),
-    ],
-  ),
-  SkillData(
-    title: '수비',
-    subtitle: '1대1 수비 기본기',
-    steps: [
-      SkillStep(
-        title: '간격 유지',
-        description:
-            '상대와 적절한 간격을 유지하며 공간을 차단하세요.\n너무 가까이 붙으면 돌파당하기 쉽습니다.',
-      ),
-      SkillStep(
-        title: '공 집중',
-        description:
-            '공보다 상대의 발에 집중하세요.\n상체 페이크에 속지 않으려면 하체를 보세요.',
-      ),
-      SkillStep(
-        title: '태클 타이밍',
-        description:
-            '무리한 태클은 반칙으로 이어집니다.\n상대가 공을 컨트롤하는 순간을 노려 정확하게 태클하세요.',
-      ),
-    ],
-    youtubeUrl: 'https://youtube.com',
-  ),
-];
+const List<SkillData> skillMockData = [];
 
-class SkillPage extends StatefulWidget {
+
+class SkillPage extends ConsumerStatefulWidget {
   const SkillPage({super.key});
 
   @override
-  State<SkillPage> createState() => _SkillPageState();
+  ConsumerState<SkillPage> createState() => _SkillPageState();
 }
 
-class _SkillPageState extends State<SkillPage> {
-  int? _selectedIndex;
-  int _selectedStepIndex = 0;
-  String _searchQuery = '';
+class _SkillPageState extends ConsumerState<SkillPage> {
   final _searchController = TextEditingController();
   int _currentPage = 0;
   int _windowStart = 0;
@@ -173,24 +52,13 @@ class _SkillPageState extends State<SkillPage> {
     super.dispose();
   }
 
-  List<MapEntry<int, SkillData>> get _filteredSkills {
-    final query = _searchQuery.trim().toLowerCase();
-    final result = <MapEntry<int, SkillData>>[];
-    for (var i = 0; i < skillMockData.length; i++) {
-      final s = skillMockData[i];
-      if (query.isEmpty ||
-          s.title.toLowerCase().contains(query) ||
-          s.subtitle.toLowerCase().contains(query)) {
-        result.add(MapEntry(i, s));
-      }
-    }
-    return result;
-  }
-
-  int get _totalPages {
-    final n = _filteredSkills.length;
-    if (n == 0) return 1;
-    return (n / kSkillPageSize).ceil();
+  void _onSearch(String val) {
+    final query = val.trim().isEmpty ? '축구 스킬' : val.trim();
+    ref.read(skillSearchQueryProvider.notifier).state = query;
+    setState(() {
+      _currentPage = 0;
+      _windowStart = 0;
+    });
   }
 
   void _onPageTap(int page) {
@@ -205,34 +73,24 @@ class _SkillPageState extends State<SkillPage> {
 
   @override
   Widget build(BuildContext context) {
+    final videosAsync = ref.watch(skillVideosProvider);
+
     return Scaffold(
       backgroundColor: YouthFieldColor.background,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _buildHeader(),
+            _buildHeader(context),
             _buildSearchBar(),
             const SizedBox(height: 20),
             Expanded(
-              child: Stack(
-                children: [
-                  SingleChildScrollView(child: _buildContent()),
-                  if (_selectedIndex == null && _totalPages > 1)
-                    Positioned(
-                      bottom: 0,
-                      left: 0,
-                      right: 0,
-                      child: DiaryPaginationBar(
-                        currentPage: _currentPage,
-                        totalPages: _totalPages,
-                        windowStart: _windowStart,
-                        onPageTap: _onPageTap,
-                        onPrevWindow: _onPrevWindow,
-                        onNextWindow: _onNextWindow,
-                      ),
-                    ),
-                ],
+              child: videosAsync.when(
+                loading: () => const _LoadingView(),
+                error: (err, _) => _ErrorView(
+                  onRetry: () => ref.invalidate(skillVideosProvider),
+                ),
+                data: (result) => _buildGrid(result.videos),
               ),
             ),
           ],
@@ -241,7 +99,7 @@ class _SkillPageState extends State<SkillPage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(BuildContext context) {
     return SizedBox(
       height: 72,
       child: Stack(
@@ -265,18 +123,7 @@ class _SkillPageState extends State<SkillPage> {
                 splashColor: Colors.transparent,
                 highlightColor: Colors.transparent,
                 hoverColor: Colors.transparent,
-                onPressed: () {
-                  if (_selectedIndex != null) {
-                    setState(() {
-                      _selectedIndex = null;
-                      _selectedStepIndex = 0;
-                      _searchQuery = '';
-                      _searchController.clear();
-                    });
-                  } else {
-                    Navigator.pop(context);
-                  }
-                },
+                onPressed: () => Navigator.pop(context),
               ),
             ),
           ),
@@ -295,12 +142,8 @@ class _SkillPageState extends State<SkillPage> {
         ),
         child: TextField(
           controller: _searchController,
-          onChanged: (val) => setState(() {
-            _searchQuery = val;
-            _selectedIndex = null;
-            _currentPage = 0;
-            _windowStart = 0;
-          }),
+          onSubmitted: _onSearch,
+          textInputAction: TextInputAction.search,
           style: YouthFieldTextStyle.placeholder.copyWith(
             color: YouthFieldColor.black800,
           ),
@@ -311,139 +154,134 @@ class _SkillPageState extends State<SkillPage> {
             border: InputBorder.none,
             isDense: true,
             contentPadding: const EdgeInsets.all(16),
+            suffixIcon: IconButton(
+              icon: const Icon(Symbols.search,
+                  color: YouthFieldColor.blue700, size: 20),
+              onPressed: () => _onSearch(_searchController.text),
+            ),
           ),
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
-    if (_selectedIndex != null) {
-      return _buildDetail(skillMockData[_selectedIndex!]);
-    }
-
-    final filtered = _filteredSkills;
-    if (filtered.isEmpty) {
-      return const Padding(
-        padding: EdgeInsets.symmetric(vertical: 60),
-        child: Center(child: Text('검색 결과가 없습니다.')),
+  Widget _buildGrid(List<YoutubeVideo> videos) {
+    if (videos.isEmpty) {
+      return const Center(
+        child: Text('검색 결과가 없습니다.'),
       );
     }
 
-    final totalPages = _totalPages;
-    final start = _currentPage * kSkillPageSize;
-    final end = (start + kSkillPageSize).clamp(0, filtered.length);
-    final pageItems = filtered.sublist(start, end);
-    return _buildGrid(pageItems, totalPages);
-  }
+    final totalPages = (videos.length / kSkillPageSize).ceil();
+    final safePage = _currentPage.clamp(0, totalPages - 1).toInt();
+    final safeWindowStart = (safePage ~/ kSkillWindowSize) * kSkillWindowSize;
+    final start = safePage * kSkillPageSize;
+    final end = (start + kSkillPageSize).clamp(0, videos.length).toInt();
+    final pageItems = videos.sublist(start, end);
 
-  Widget _buildGrid(List<MapEntry<int, SkillData>> items, int totalPages) {
-    const double cardWidth = 260;
-    const double cardHeight = cardWidth * 9 / 16;
-    return Padding(
-      padding: EdgeInsets.fromLTRB(24, 0, 24, totalPages > 1 ? 72 : 40),
-      child: Wrap(
-        spacing: 12,
-        runSpacing: 12,
-        children: items.map((entry) {
-          final s = entry.value;
-          return SizedBox(
-            width: cardWidth,
-            height: cardHeight,
-            child: SkillCard(
-              title: s.title,
-              subtitle: s.subtitle,
-              onTap: () => setState(() {
-                _selectedIndex = entry.key;
-                _selectedStepIndex = 0;
-              }),
+    return Stack(
+      children: [
+        SingleChildScrollView(
+          padding: EdgeInsets.fromLTRB(24, 0, 24, totalPages > 1 ? 72 : 40),
+          child: Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: pageItems.map((v) {
+              const double cardWidth = 260;
+              const double cardHeight = cardWidth * 9 / 16;
+              return SizedBox(
+                width: cardWidth,
+                height: cardHeight,
+                child: SkillCard(
+                  title: v.title,
+                  subtitle: v.channelTitle,
+                  thumbnailUrl: v.thumbnailUrl,
+                  onTap: () => _openYoutube(v.youtubeUrl),
+                ),
+              );
+            }).toList(),
+          ),
+        ),
+        if (totalPages > 1)
+          Positioned(
+            bottom: 0,
+            left: 0,
+            right: 0,
+            child: DiaryPaginationBar(
+              currentPage: safePage,
+              totalPages: totalPages,
+              windowStart: safeWindowStart,
+              onPageTap: _onPageTap,
+              onPrevWindow: _onPrevWindow,
+              onNextWindow: _onNextWindow,
             ),
-          );
-        }).toList(),
-      ),
+          ),
+      ],
     );
   }
 
-  Widget _buildDetail(SkillData s) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
+  Future<void> _openYoutube(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+}
+
+// ─── 상태 뷰 ────────────────────────────────────
+
+class _LoadingView extends StatelessWidget {
+  const _LoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(s.title,
-                        style: YouthFieldTextStyle.body3.copyWith(
-                            color: YouthFieldColor.black800,
-                            fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 4),
-                    Text(s.subtitle,
-                        style: YouthFieldTextStyle.textCount
-                            .copyWith(color: YouthFieldColor.black500)),
-                  ],
-                ),
-              ),
-              if (s.youtubeUrl != null)
-                GestureDetector(
-                  onTap: () => launchUrl(
-                    Uri.parse(s.youtubeUrl!),
-                    mode: LaunchMode.externalApplication,
-                  ),
-                  child: SvgPicture.asset(
-                    'assets/svg/youtube_logo.svg',
-                    width: 32,
-                    height: 32,
-                  ),
-                ),
-            ],
+          CircularProgressIndicator(color: YouthFieldColor.blue700),
+          SizedBox(height: 16),
+          Text('영상을 불러오는 중...'),
+        ],
+      ),
+    );
+  }
+}
+
+class _ErrorView extends StatelessWidget {
+  final VoidCallback onRetry;
+
+  const _ErrorView({required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Symbols.wifi_off, size: 48, color: YouthFieldColor.black300),
+          const SizedBox(height: 12),
+          Text(
+            '영상을 불러오지 못했습니다.',
+            style: YouthFieldTextStyle.body4
+                .copyWith(color: YouthFieldColor.black500),
           ),
           const SizedBox(height: 20),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Container(color: YouthFieldColor.black50),
+          GestureDetector(
+            onTap: onRetry,
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
+              decoration: BoxDecoration(
+                color: YouthFieldColor.blue700,
+                borderRadius: BorderRadius.circular(100),
+              ),
+              child: Text(
+                '다시 시도',
+                style: YouthFieldTextStyle.smallButton
+                    .copyWith(color: YouthFieldColor.white),
               ),
             ),
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: List.generate(s.steps.length, (i) {
-              final isSelected = i == _selectedStepIndex;
-              return GestureDetector(
-                onTap: () => setState(() => _selectedStepIndex = i),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 14, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? YouthFieldColor.blue700
-                        : YouthFieldColor.blue300,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    s.steps[i].title,
-                    style: YouthFieldTextStyle.smallButton
-                        .copyWith(color: YouthFieldColor.white),
-                  ),
-                ),
-              );
-            }),
-          ),
-          const SizedBox(height: 20),
-          Text(
-            s.steps[_selectedStepIndex].description,
-            style: YouthFieldTextStyle.textCount
-                .copyWith(color: YouthFieldColor.black800),
           ),
         ],
       ),

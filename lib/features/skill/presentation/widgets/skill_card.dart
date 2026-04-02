@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
@@ -5,31 +6,43 @@ import 'package:youthfield/core/constants/text_style.dart';
 class SkillCard extends StatelessWidget {
   final String title;
   final String subtitle;
+  final String? thumbnailUrl;
   final VoidCallback onTap;
 
   const SkillCard({
     super.key,
     required this.title,
     required this.subtitle,
+    this.thumbnailUrl,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(8),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(8),
         child: Stack(
           fit: StackFit.expand,
           children: [
-            Container(color: YouthFieldColor.black50),
+            if (thumbnailUrl != null)
+              CachedNetworkImage(
+                imageUrl: thumbnailUrl!,
+                fit: BoxFit.cover,
+                placeholder: (_, __) => _placeholder(),
+                errorWidget: (_, __, ___) => _placeholder(),
+              )
+            else
+              _placeholder(),
+
             const DecoratedBox(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Color(0xCC000000)],
+                  colors: [Colors.transparent, Color(0xDD000000)],
                 ),
               ),
             ),
@@ -46,6 +59,7 @@ class SkillCard extends StatelessWidget {
                     title,
                     style: YouthFieldTextStyle.body4.copyWith(
                       color: YouthFieldColor.white,
+                      fontWeight: FontWeight.w700,
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -54,7 +68,7 @@ class SkillCard extends StatelessWidget {
                   Text(
                     subtitle,
                     style: YouthFieldTextStyle.smallButton.copyWith(
-                      color: YouthFieldColor.white,
+                      color: YouthFieldColor.white.withValues(alpha: 0.8),
                       fontWeight: FontWeight.w400,
                     ),
                     maxLines: 1,
@@ -68,4 +82,15 @@ class SkillCard extends StatelessWidget {
       ),
     );
   }
+
+  Widget _placeholder() =>
+      Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [YouthFieldColor.blue300, YouthFieldColor.blue800],
+          ),
+        ),
+      );
 }
