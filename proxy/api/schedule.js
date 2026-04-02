@@ -1,0 +1,142 @@
+/**
+ * Vercel Serverless Function — K League Youth Schedule Proxy
+ *
+ * GET /api/schedule?year=2026
+ *   → 고등+중등 전체 리그 목록과 각 리그별 경기 일정 모두 반환
+ */
+
+const BASE = 'https://www.kleague.com';
+const STYLE = 'LEAGUE2';
+
+async function getSessionCookies() {
+  const res = await fetch(`${BASE}/youth/junior.do`, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'text/html,application/xhtml+xml',
+    },
+  });
+  const raw = res.headers.get('set-cookie') || '';
+  // set-cookie 는 여러 개가 콤마로 이어질 수 있음
+  const cookies = {};
+  // 각 쿠키를 파싱
+  for (const part of raw.split(/,(?=[^ ])/)) {
+    const kv = part.split(';')[0].trim();
+    const idx = kv.indexOf('=');
+    if (idx > 0) cookies[kv.slice(0, idx).trim()] = kv.slice(idx + 1).trim();
+  }
+  return Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
+}
+
+async function postJson(endpoint, body, cookieStr) {
+  const res = await fetch(`${BASE}${endpoint}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json; charset=utf-8',
+      'Referer': `${BASE}/youth/junior.do`,
+      'Origin': BASE,
+      'Cookie': cookieStr,
+      'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Accept': 'application/json, text/plain, */*',
+      'X-Requested-With': 'XMLHttpRequest',
+    },
+    body: JSON.stringify(body),
+  });
+
+  // 응답 쿠키 병합
+  const newCookieRaw = res.headers.get('set-cookie') || '';
+  let merged = cookieStr;
+  if (newCookieRaw) {
+    const newCookies = {};
+    for (const part of newCookieRaw.split(/,(?=[^ ])/)) {
+      const kv = part.split(';')[0].trim();
+      const idx = kv.indexOf('=');
+      if (idx > 0) newCookies[kv.slice(0, idx).trim()] = kv.slice(idx + 1).trim();
+    }
+    // 기존 쿠키에 덮어쓰기
+    const existing = {};
+    for (const part of cookieStr.split(';')) {
+      const kv = part.trim();
+      const idx = kv.indexOf('=');
+      if (idx > 0) existing[kv.slice(0, idx).trim()] = kv.slice(idx + 1).trim();
+    }
+    Object.assign(existing, newCookies);
+    merged = Object.entries(existing).map(([k, v]) => `${k}=${v}`).join('; ');
+  }
+
+  const data = await res.json();
+  return { data, cookieStr: merged };
+}
+
+export default async function handler(req, res) {
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+
+  if (req.method === 'OPTIONS') return res.status(200).end();
+  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
+
+  const { year = '2026' } = req.query;
+
+  try {
+    // 1) 세션 획득
+    let cookieStr = await getSessionCookies();
+
+    // 2) yearChange → 리그 목록 + A그룹 경기
+    const yearRes = await postJson(
+      '/youth/junior/yearChange.do',
+      { year, style: STYLE },
+      cookieStr,
+    );
+    cookieStr = yearRes.cookieStr;
+
+    const yearData = yearRes.data;
+    if (yearData.resultCode !== '200') {
+      return res.status(502).json({ error: yearData.resultMsg ?? 'yearChange failed' });
+    }
+
+    const leagues = yearData.data?.leagueNameList ?? [];
+    // leagueId → 경기 목록
+    const allSchedules = {};
+
+    // A그룹 (yearChange 에서 이미 받음)
+    for (const m of (yearData.data?.scheduleList ?? [])) {
+      if (!allSchedules[m.leagueId]) allSchedules[m.leagueId] = [];
+      allSchedules[m.leagueId].push(m);
+    }
+
+    // 나머지 리그 (B, C 고등 / A, B, C 중등) 순차 조회
+    const remainingLeagues = leagues.filter(
+      (l) => !allSchedules[l.leagueId] || allSchedules[l.leagueId].length === 0
+    );
+
+    for (const league of remainingLeagues) {
+      try {
+        const leagueRes = await postJson(
+          '/youth/junior/leagueNameChange.do',
+          { leagueId: String(league.leagueId), style: STYLE },
+          cookieStr,
+        );
+        cookieStr = leagueRes.cookieStr;
+
+        if (leagueRes.data.resultCode === '200') {
+          const sched = leagueRes.data.data?.scheduleList ?? [];
+          allSchedules[league.leagueId] = sched;
+        }
+      } catch (e) {
+        console.error(`[schedule] leagueId=${league.leagueId} failed:`, e.message);
+      }
+    }
+
+    // 전체 scheduleList 를 하나로 합쳐서 반환
+    const mergedSchedules = Object.values(allSchedules).flat();
+
+    return res.status(200).json({
+      leagueNameList: leagues,
+      scheduleList: mergedSchedules,
+    });
+
+  } catch (err) {
+    console.error('[schedule proxy]', err);
+    return res.status(500).json({ error: err.message ?? 'Internal server error' });
+  }
+}

@@ -27,67 +27,72 @@ class _ScheduleDetailPageState extends State<ScheduleDetailPage> {
     for (final m in widget.event.matches) {
       (_grouped[m.month] ??= []).add(m);
     }
+    // 월 내 경기도 날짜 오름차순 정렬
+    for (final list in _grouped.values) {
+      list.sort((a, b) => a.date.compareTo(b.date));
+    }
     _months = _grouped.keys.toList()..sort();
-    _selectedMonth = _months.isNotEmpty ? _months.first : 0;
+    // 오늘 이후 경기가 있는 가장 가까운 달로 초기 선택
+    final today = DateTime.now();
+    _selectedMonth = _months.firstWhere(
+      (month) => month >= today.month,
+      orElse: () => _months.isNotEmpty ? _months.last : 0,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     final matches = _grouped[_selectedMonth] ?? [];
 
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.event.title,
-              style: YouthFieldTextStyle.body3.copyWith(
-                color: YouthFieldColor.black800,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              widget.event.dateRange,
-              style: YouthFieldTextStyle.textCount.copyWith(
-                color: YouthFieldColor.black500,
-              ),
-            ),
-            Text(
-              widget.event.venue,
-              style: YouthFieldTextStyle.textCount.copyWith(
-                color: YouthFieldColor.black500,
-              ),
-            ),
-            const SizedBox(height: 24),
-            _MonthDropdown(
-              months: _months,
-              selectedMonth: _selectedMonth,
-              onChanged: (m) => setState(() => _selectedMonth = m),
-            ),
-            const SizedBox(height: 20),
-            ...matches.map(
-              (m) => Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: MatchRow(
-                  match: m,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => MatchDetailPage(
-                        match: m,
-                        eventTitle: widget.event.title,
-                      ),
-                    ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          widget.event.title,
+          style: YouthFieldTextStyle.body3.copyWith(
+            color: YouthFieldColor.black800,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          widget.event.dateRange,
+          style: YouthFieldTextStyle.textCount.copyWith(
+            color: YouthFieldColor.black500,
+          ),
+        ),
+        Text(
+          widget.event.venue,
+          style: YouthFieldTextStyle.textCount.copyWith(
+            color: YouthFieldColor.black500,
+          ),
+        ),
+        const SizedBox(height: 24),
+        _MonthDropdown(
+          months: _months,
+          selectedMonth: _selectedMonth,
+          onChanged: (m) => setState(() => _selectedMonth = m),
+        ),
+        const SizedBox(height: 20),
+        ...matches.map(
+          (m) => Padding(
+            padding: const EdgeInsets.only(bottom: 10),
+            child: MatchRow(
+              match: m,
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => MatchDetailPage(
+                    match: m,
+                    eventTitle: widget.event.title,
                   ),
                 ),
               ),
             ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 40),
+      ],
     );
   }
 }
