@@ -25,7 +25,7 @@ PlayerInfo _u18(String name, String pos, int num) => PlayerInfo(
   position: pos,
   ageGroup: 'U-18',
   number: num,
-  birthdate: _bd(num, 2007),
+  birthdate: _bd(num, 2008),
   seasonStats: _zero,
   nationalStats: _zero,
 );
@@ -37,7 +37,7 @@ PlayerInfo _u15(String name, String pos, int num) => PlayerInfo(
   position: pos,
   ageGroup: 'U-15',
   number: num,
-  birthdate: _bd(num, 2010),
+  birthdate: _bd(num, 2011),
   seasonStats: _zero,
   nationalStats: _zero,
 );
@@ -49,7 +49,7 @@ PlayerInfo _u12(String name, String pos, int num) => PlayerInfo(
   position: pos,
   ageGroup: 'U-12',
   number: num,
-  birthdate: _bd(num, 2013),
+  birthdate: _bd(num, 2014),
   seasonStats: _zero,
   nationalStats: _zero,
 );

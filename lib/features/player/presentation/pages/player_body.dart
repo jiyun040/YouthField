@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
@@ -368,13 +369,22 @@ class _PlayerPhoto extends StatelessWidget {
         width: 320,
         height: 360,
         child: imageUrl != null
-            ? Image.network(
-                'https://images.weserv.nl/?url=${Uri.encodeComponent(imageUrl!)}',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(),
-              )
+            ? _buildImage(imageUrl!)
             : _placeholder(),
       ),
+    );
+  }
+
+  Widget _buildImage(String url) {
+    if (url.startsWith('assets/')) {
+      return Image.asset(url, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _placeholder());
+    }
+    return CachedNetworkImage(
+      imageUrl: 'https://images.weserv.nl/?url=${Uri.encodeComponent(url)}',
+      fit: BoxFit.cover,
+      placeholder: (_, __) => _placeholder(),
+      errorWidget: (_, __, ___) => _placeholder(),
     );
   }
 

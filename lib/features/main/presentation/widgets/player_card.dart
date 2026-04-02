@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
@@ -33,11 +34,7 @@ class PlayerCard extends StatelessWidget {
           fit: StackFit.expand,
           children: [
             if (imageUrl != null)
-              Image.network(
-                'https://images.weserv.nl/?url=${Uri.encodeComponent(imageUrl!)}',
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) => _placeholder(),
-              )
+              _buildImage(imageUrl!)
             else
               _placeholder(),
             Positioned(
@@ -128,6 +125,19 @@ class PlayerCard extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildImage(String url) {
+    if (url.startsWith('assets/')) {
+      return Image.asset(url, fit: BoxFit.cover,
+          errorBuilder: (_, __, ___) => _placeholder());
+    }
+    return CachedNetworkImage(
+      imageUrl: 'https://images.weserv.nl/?url=${Uri.encodeComponent(url)}',
+      fit: BoxFit.cover,
+      placeholder: (_, __) => _placeholder(),
+      errorWidget: (_, __, ___) => _placeholder(),
     );
   }
 
