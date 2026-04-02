@@ -146,7 +146,7 @@ class PlayerCard extends StatelessWidget {
       gradient: LinearGradient(
         begin: Alignment.topLeft,
         end: Alignment.bottomRight,
-        colors: [Color(0xFFB71C1C), Color(0xFF7F0000)],
+        colors: [YouthFieldColor.blue300, YouthFieldColor.blue800],
       ),
     ),
   );
