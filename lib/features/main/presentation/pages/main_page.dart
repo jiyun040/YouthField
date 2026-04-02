@@ -16,7 +16,7 @@ import 'package:youthfield/features/mypage/presentation/providers/mypage_provide
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import 'package:youthfield/features/schedule/presentation/pages/schedule_page.dart';
-import 'package:youthfield/features/player/data/player_mock_data.dart';
+import 'package:youthfield/features/player/data/clubs/all_clubs_data.dart';
 import 'package:youthfield/features/player/presentation/pages/player_body.dart';
 import '../pages/home_tab.dart';
 import '../pages/skill_tab.dart';
@@ -129,7 +129,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   void _onLogoTap() {
     Navigator.popUntil(context, (route) => route.isFirst);
     setState(() {
-      _selectedTab = -1; // 홈 화면으로
+      _selectedTab = -1;
       _selectedPlayerIndex = null;
       _selectedScheduleIndex = null;
     });
@@ -163,7 +163,7 @@ class _MainPageState extends ConsumerState<MainPage> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: YouthFieldColor.white,
         title: Text('로그아웃', style: YouthFieldTextStyle.body4),
         content: Text(
           '로그아웃 하시겠습니까?',
@@ -369,7 +369,7 @@ class _MainPageState extends ConsumerState<MainPage> {
             _selectedTab = 3;
           }),
           onPlayerTap: (name) {
-            final index = playerMockData.indexWhere((p) => p.name == name);
+            final index = allClubPlayers.indexWhere((p) => p.name == name);
             if (index == -1) return;
             setState(() {
               _selectedTab = 0;

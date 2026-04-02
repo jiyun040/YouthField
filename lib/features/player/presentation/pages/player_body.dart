@@ -4,7 +4,7 @@ import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import 'package:youthfield/features/main/presentation/widgets/player_card.dart';
 import 'package:youthfield/features/mypage/domain/entities/player_stats.dart';
-import 'package:youthfield/features/player/data/player_mock_data.dart';
+import 'package:youthfield/features/player/data/clubs/all_clubs_data.dart';
 import 'package:youthfield/features/player/domain/entities/player_info.dart';
 
 const int kPlayerPageSize = 20;
@@ -43,7 +43,7 @@ class _PlayerBodyState extends State<PlayerBody> {
 
   List<({int originalIndex, PlayerInfo player})> get _filtered {
     final query = _searchQuery.toLowerCase();
-    final indexed = playerMockData.asMap().entries.map((e) => (originalIndex: e.key, player: e.value)).toList();
+    final indexed = allClubPlayers.asMap().entries.map((e) => (originalIndex: e.key, player: e.value)).toList();
 
     final result = indexed.where((item) {
       final p = item.player;
@@ -111,7 +111,7 @@ class _PlayerBodyState extends State<PlayerBody> {
   @override
   Widget build(BuildContext context) {
     if (widget.selectedIndex != null) {
-      return _PlayerDetailPage(player: playerMockData[widget.selectedIndex!]);
+      return _PlayerDetailPage(player: allClubPlayers[widget.selectedIndex!]);
     }
 
     final filtered = _filtered;
