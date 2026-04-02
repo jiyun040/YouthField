@@ -1,10 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:youthfield/features/diary/data/repositories/diary_repository_impl.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 
 class DiaryNotifier extends Notifier<List<DiaryEntry>> {
   @override
-  List<DiaryEntry> build() => List.from(diaryMockEntries);
+  List<DiaryEntry> build() => [];
 
   void add(DiaryEntry entry) {
     state = [entry, ...state];

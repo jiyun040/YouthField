@@ -40,7 +40,6 @@ class _MainPageState extends ConsumerState<MainPage> {
   final _skillTabKey = GlobalKey<SkillTabState>();
 
   int? _selectedPlayerIndex;
-  int? _selectedScheduleIndex;
 
   DiaryMode _diaryMode = DiaryMode.list;
   DiaryEntry? _selectedDiaryEntry;
@@ -122,7 +121,6 @@ class _MainPageState extends ConsumerState<MainPage> {
         _diaryCurrentPage = 0;
         _diaryWindowStart = 0;
       }
-      if (i != 3) _selectedScheduleIndex = null;
     });
   }
 
@@ -131,7 +129,6 @@ class _MainPageState extends ConsumerState<MainPage> {
     setState(() {
       _selectedTab = -1;
       _selectedPlayerIndex = null;
-      _selectedScheduleIndex = null;
     });
   }
 
@@ -242,13 +239,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   }
 
   void _onScheduleBack() {
-    setState(() {
-      if (_selectedScheduleIndex != null) {
-        _selectedScheduleIndex = null;
-      } else {
-        _selectedTab = -1;
-      }
-    });
+    setState(() => _selectedTab = -1);
   }
 
   @override
@@ -364,10 +355,6 @@ class _MainPageState extends ConsumerState<MainPage> {
       case -1:
         return HomeTab(
           onScheduleMoreTap: () => setState(() => _selectedTab = 3),
-          onScheduleTap: (index) => setState(() {
-            _selectedScheduleIndex = index;
-            _selectedTab = 3;
-          }),
           onPlayerTap: (name) {
             final index = allClubPlayers.indexWhere((p) => p.name == name);
             if (index == -1) return;
@@ -402,10 +389,7 @@ class _MainPageState extends ConsumerState<MainPage> {
           }),
         );
       case 3:
-        return ScheduleBody(
-          selectedIndex: _selectedScheduleIndex,
-          onSelect: (i) => setState(() => _selectedScheduleIndex = i),
-        );
+        return const ScheduleBody();
       default:
         return const SizedBox.shrink();
     }
