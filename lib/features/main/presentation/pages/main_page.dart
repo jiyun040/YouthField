@@ -1,8 +1,8 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:youthfield/core/constants/text_style.dart';
-import 'package:youthfield/core/services/user_session.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:youthfield/core/providers/user_session_provider.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/providers/auth_provider.dart';
@@ -10,7 +10,7 @@ import 'package:youthfield/core/widgets/login_required_dialog.dart';
 import 'package:youthfield/core/widgets/yf_app_bar.dart';
 import 'package:youthfield/core/widgets/yf_menu_bar.dart';
 import 'package:youthfield/features/auth/presentation/pages/login_page.dart';
-import 'package:youthfield/features/diary/data/diary_store.dart';
+import 'package:youthfield/features/diary/presentation/providers/diary_provider.dart';
 import 'package:youthfield/features/mypage/presentation/pages/mypage_page.dart';
 import 'package:youthfield/features/mypage/presentation/providers/mypage_provider.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
@@ -47,7 +47,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   int _diaryCurrentPage = 0;
   int _diaryWindowStart = 0;
 
-  List<DiaryEntry> get _diaryEntries => DiaryStore().entries.toList();
+  List<DiaryEntry> get _diaryEntries => ref.read(diaryProvider);
 
   int get _diaryTotalPages {
     final n = _diaryEntries.length;
@@ -62,7 +62,7 @@ class _MainPageState extends ConsumerState<MainPage> {
   }
 
   Future<void> _loadSession() async {
-    await UserSession().loadFromPrefs();
+    await ref.read(userSessionProvider.notifier).loadFromPrefs();
     if (mounted) setState(() {});
   }
 
@@ -189,7 +189,7 @@ class _MainPageState extends ConsumerState<MainPage> {
             style: TextButton.styleFrom(overlayColor: Colors.transparent),
             onPressed: () async {
               Navigator.pop(ctx);
-              await UserSession().clear();
+              await ref.read(userSessionProvider.notifier).clear();
               await FirebaseAuth.instance.signOut();
             },
             child: Text(
@@ -316,7 +316,7 @@ class _MainPageState extends ConsumerState<MainPage> {
           },
           onLogoTap: _onLogoTap,
           onProfileTap: _openMyPage,
-          profileImageBytes: isLoggedIn ? UserSession().profileImageBytes : null,
+          profileImageBytes: isLoggedIn ? ref.watch(userSessionProvider).profileImageBytes : null,
           profilePhotoUrl: isLoggedIn ? firebaseUser.photoURL : null,
         ),
         YFMenuBar(
@@ -395,7 +395,7 @@ class _MainPageState extends ConsumerState<MainPage> {
             _diaryMode = DiaryMode.detail;
           }),
           onSave: (entry) => setState(() {
-            DiaryStore().add(entry);
+            ref.read(diaryProvider.notifier).add(entry);
             _diaryMode = DiaryMode.list;
             _diaryCurrentPage = 0;
             _diaryWindowStart = 0;

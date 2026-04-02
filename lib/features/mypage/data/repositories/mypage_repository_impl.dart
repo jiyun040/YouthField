@@ -1,6 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:youthfield/core/services/user_session.dart';
-import 'package:youthfield/features/diary/data/diary_store.dart';
+import 'package:youthfield/core/providers/user_session_provider.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/mypage/domain/entities/player_stats.dart';
 import 'package:youthfield/features/mypage/domain/entities/recent_player.dart';
@@ -133,22 +132,34 @@ class MypageRepositoryImplGeneral implements MypageRepository {
 }
 
 class UserSessionRepository implements MypageRepository {
+  final UserSessionState session;
+  final List<DiaryEntry> diaries;
+
+  const UserSessionRepository({
+    required this.session,
+    required this.diaries,
+  });
+
   @override
   Future<UserProfile> getMyProfile() async {
-    final s = UserSession();
     final firebaseUser = FirebaseAuth.instance.currentUser;
-    final name = (s.name?.isNotEmpty == true)
-        ? s.name!
+    final name = (session.name?.isNotEmpty == true)
+        ? session.name!
         : (firebaseUser?.displayName ?? '');
 
-    final bytes = s.profileImageBytes;
+    final bytes = session.profileImageBytes;
     final photoUrl = (bytes == null) ? firebaseUser?.photoURL : null;
 
-    switch (s.userType ?? UserType.general) {
+    final recentDiaries = ([...diaries]
+          ..sort((a, b) => b.date.compareTo(a.date)))
+        .take(3)
+        .toList();
+
+    switch (session.userType ?? UserType.general) {
       case UserType.player:
         DateTime birthDate;
         try {
-          final parts = (s.birthdate ?? '2000.01.01').split('.');
+          final parts = (session.birthdate ?? '2000.01.01').split('.');
           birthDate = DateTime(
             int.parse(parts[0]),
             int.parse(parts[1]),
@@ -163,10 +174,10 @@ class UserSessionRepository implements MypageRepository {
           name: name,
           profileImageBytes: bytes,
           profileImageUrl: photoUrl,
-          position: s.position ?? 'FW',
-          school: s.team ?? '',
+          position: session.position ?? 'FW',
+          school: session.team ?? '',
           birthDate: birthDate,
-          resolve: s.resolve,
+          resolve: session.resolve,
           seasonStats: const PlayerStats(
             appearances: 0,
             goals: 0,
@@ -182,11 +193,11 @@ class UserSessionRepository implements MypageRepository {
             redCards: 0,
           ),
           watchedSkills: const [],
-          recentDiaries: DiaryStore().recent(),
+          recentDiaries: recentDiaries,
         );
       case UserType.staff:
-        final team = s.team ?? '';
-        final roleLabel = s.staffRole;
+        final team = session.team ?? '';
+        final roleLabel = session.staffRole;
         final teamRole = (team.isNotEmpty && roleLabel != null)
             ? '$team $roleLabel'
             : team.isNotEmpty
@@ -200,7 +211,7 @@ class UserSessionRepository implements MypageRepository {
           teamRole: teamRole,
           watchedSkills: const [],
           recentPlayers: const [],
-          recentDiaries: DiaryStore().recent(),
+          recentDiaries: recentDiaries,
         );
       case UserType.general:
         return GeneralProfile(
@@ -210,7 +221,7 @@ class UserSessionRepository implements MypageRepository {
           profileImageUrl: photoUrl,
           watchedSkills: const [],
           recentPlayers: const [],
-          recentDiaries: DiaryStore().recent(),
+          recentDiaries: recentDiaries,
         );
     }
   }

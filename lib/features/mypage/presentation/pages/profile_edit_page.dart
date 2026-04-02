@@ -5,7 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
-import 'package:youthfield/core/services/user_session.dart';
+import 'package:youthfield/core/providers/user_session_provider.dart';
 import 'package:youthfield/features/auth/presentation/widgets/auth_text_field.dart';
 import 'package:youthfield/features/mypage/domain/entities/user_type.dart';
 import 'package:youthfield/features/mypage/presentation/providers/mypage_provider.dart';
@@ -44,7 +44,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
   @override
   void initState() {
     super.initState();
-    final s = UserSession();
+    final s = ref.read(userSessionProvider);
     _nameController = TextEditingController(text: s.name ?? '');
     _teamController = TextEditingController(text: s.team ?? '');
     _birthdateController = TextEditingController(text: s.birthdate ?? '');
@@ -82,10 +82,10 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
 
   bool get _canSave => _nameController.text.trim().isNotEmpty;
 
-  void _onSave() {
+  Future<void> _onSave() async {
     if (!_canSave) return;
     final rawTeam = _teamController.text.trim().replaceAll(' ', '');
-    UserSession().save(
+    await ref.read(userSessionProvider.notifier).save(
       name: _nameController.text.trim(),
       userType: _userType,
       profileImageBytes: _profileImageBytes,
@@ -100,7 +100,7 @@ class _ProfileEditPageState extends ConsumerState<ProfileEditPage> {
           : _resolveController.text.trim(),
     );
     ref.invalidate(myProfileProvider);
-    Navigator.pop(context);
+    if (mounted) Navigator.pop(context);
   }
 
   @override

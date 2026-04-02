@@ -5,7 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
-import 'package:youthfield/core/services/user_session.dart';
+import 'package:youthfield/core/providers/user_session_provider.dart';
 import 'package:youthfield/features/auth/presentation/providers/profile_setup_provider.dart';
 import 'package:youthfield/features/auth/presentation/widgets/auth_button.dart';
 import 'package:youthfield/features/auth/presentation/widgets/auth_text_field.dart';
@@ -86,7 +86,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
     } catch (_) {}
   }
 
-  void _onComplete() {
+  Future<void> _onComplete() async {
     if (!_canSubmit) return;
 
     final setupState = ref.read(profileSetupProvider);
@@ -103,7 +103,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
       _ => null,
     };
 
-    UserSession().save(
+    await ref.read(userSessionProvider.notifier).save(
       name: _nameController.text.trim(),
       userType: userType,
       profileImageBytes: setupState.profileImageBytes,
@@ -123,6 +123,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
     ref.invalidate(myProfileProvider);
     ref.read(profileSetupProvider.notifier).reset();
 
+    if (!mounted) return;
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (_) => const MainPage()),
