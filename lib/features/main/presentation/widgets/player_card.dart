@@ -32,47 +32,56 @@ class PlayerCard extends StatelessWidget {
         child: Stack(
           fit: StackFit.expand,
           children: [
-            // 배경 이미지 / 플레이스홀더
             if (imageUrl != null)
-              Image.network(imageUrl!, fit: BoxFit.cover,
-                  errorBuilder: (_, __, ___) => _placeholder())
+              Image.network(
+                'https://images.weserv.nl/?url=${Uri.encodeComponent(imageUrl!)}',
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => _placeholder(),
+              )
             else
               _placeholder(),
-
-            // 포지션 뱃지 (좌상단)
             Positioned(
               top: 10,
               left: 10,
-              child: _Badge(label: position, color: Colors.white, textColor: YouthFieldColor.black800),
+              child: _Badge(
+                label: position,
+                color: YouthFieldColor.white,
+                textColor: YouthFieldColor.black800,
+              ),
             ),
-
-            // 연령대 뱃지 (우상단)
             Positioned(
               top: 10,
               right: 10,
-              child: _Badge(label: ageGroup, color: YouthFieldColor.blue800, textColor: YouthFieldColor.white),
-            ),
-
-            // 등번호
-            Center(
-              child: Text(
-                '$number',
-                style: const TextStyle(
-                  fontSize: 64,
-                  fontWeight: FontWeight.w900,
-                  color: Colors.white,
-                  shadows: [Shadow(blurRadius: 8, color: Colors.black45)],
-                ),
+              child: _Badge(
+                label: ageGroup,
+                color: YouthFieldColor.gold,
+                textColor: YouthFieldColor.white,
               ),
             ),
+            if (imageUrl == null)
+              Center(
+                child: Text(
+                  '$number',
+                  style: const TextStyle(
+                    fontSize: 64,
+                    fontWeight: FontWeight.w900,
+                    color: YouthFieldColor.white,
+                    shadows: [
+                      Shadow(blurRadius: 8, color: YouthFieldColor.black800),
+                    ],
+                  ),
+                ),
+              ),
 
-            // 하단 정보 오버레이
             Positioned(
               left: 0,
               right: 0,
               bottom: 0,
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
+                ),
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.bottomCenter,
@@ -94,7 +103,11 @@ class PlayerCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        const Icon(Symbols.location_on, color: YouthFieldColor.white, size: 12),
+                        const Icon(
+                          Symbols.location_on,
+                          color: YouthFieldColor.white,
+                          size: 12,
+                        ),
                         const SizedBox(width: 2),
                         Expanded(
                           child: Text(
@@ -119,14 +132,14 @@ class PlayerCard extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [Color(0xFFB71C1C), Color(0xFF7F0000)],
-          ),
-        ),
-      );
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [Color(0xFFB71C1C), Color(0xFF7F0000)],
+      ),
+    ),
+  );
 }
 
 class _Badge extends StatelessWidget {
@@ -134,7 +147,11 @@ class _Badge extends StatelessWidget {
   final Color color;
   final Color textColor;
 
-  const _Badge({required this.label, required this.color, required this.textColor});
+  const _Badge({
+    required this.label,
+    required this.color,
+    required this.textColor,
+  });
 
   @override
   Widget build(BuildContext context) {

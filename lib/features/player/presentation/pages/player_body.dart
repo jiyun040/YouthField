@@ -369,7 +369,7 @@ class _PlayerPhoto extends StatelessWidget {
         height: 360,
         child: imageUrl != null
             ? Image.network(
-                imageUrl!,
+                'https://images.weserv.nl/?url=${Uri.encodeComponent(imageUrl!)}',
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => _placeholder(),
               )
