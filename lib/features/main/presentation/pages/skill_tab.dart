@@ -1,68 +1,59 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
-import 'package:youthfield/features/skill/presentation/pages/skill_page.dart';
+import 'package:youthfield/features/skill/data/models/youtube_video.dart';
+import 'package:youthfield/features/skill/presentation/providers/skill_provider.dart';
 import 'package:youthfield/features/skill/presentation/widgets/skill_card.dart';
 
 const int kSkillPageSize = 12;
 const int kSkillWindowSize = 5;
 
-class SkillTab extends StatefulWidget {
+class SkillTab extends ConsumerStatefulWidget {
   final ValueChanged<bool>? onSkillSelected;
 
   const SkillTab({super.key, this.onSkillSelected});
 
   @override
-  State<SkillTab> createState() => SkillTabState();
+  ConsumerState<SkillTab> createState() => SkillTabState();
 }
 
-class SkillTabState extends State<SkillTab> {
-  int? _selectedIndex;
-  int _stepIndex = 0;
-  String _searchQuery = '';
+class SkillTabState extends ConsumerState<SkillTab> {
   final _searchController = TextEditingController();
   int _currentPage = 0;
   int _windowStart = 0;
 
-  int get _totalPages =>
-      (skillMockData.length / kSkillPageSize).ceil().clamp(1, 999);
+  // 외부(main_page)에서 back 버튼 눌렀을 때 호출
+  bool handleBack() => false;
+  bool get hasSelection => false;
 
-  bool get hasSelection => _selectedIndex != null;
-
-  bool handleBack() {
-    if (_selectedIndex != null) {
-      setState(() {
-        _selectedIndex = null;
-        _stepIndex = 0;
-        _searchQuery = '';
-        _searchController.clear();
-        _currentPage = 0;
-        _windowStart = 0;
-      });
-      widget.onSkillSelected?.call(false);
-      return true;
-    }
-    return false;
+  void _onPageTap(int page) {
+    setState(() {
+      _currentPage = page;
+      _windowStart = (page ~/ kSkillWindowSize) * kSkillWindowSize;
+    });
   }
 
-  void _onPageTap(int page) => setState(() => _currentPage = page);
+  void _onPrevWindow() => setState(() => _windowStart -= kSkillWindowSize);
+  void _onNextWindow() => setState(() => _windowStart += kSkillWindowSize);
 
-  void _onPrevWindow() =>
-      setState(() => _windowStart -= kSkillWindowSize);
-
-  void _onNextWindow() =>
-      setState(() => _windowStart += kSkillWindowSize);
-
-  void _select(int index) {
+  void _onSearch(String val) {
+    final query = val.trim().isEmpty ? '축구 스킬' : val.trim();
+    ref.read(skillSearchQueryProvider.notifier).state = query;
     setState(() {
-      _selectedIndex = index;
-      _stepIndex = 0;
+      _currentPage = 0;
+      _windowStart = 0;
     });
-    widget.onSkillSelected?.call(true);
+  }
+
+  Future<void> _openYoutube(String url) async {
+    final uri = Uri.parse(url);
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
   }
 
   @override
@@ -73,9 +64,12 @@ class SkillTabState extends State<SkillTab> {
 
   @override
   Widget build(BuildContext context) {
+    final videosAsync = ref.watch(skillVideosProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
+        // 검색바
         Padding(
           padding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
           child: Container(
@@ -85,13 +79,8 @@ class SkillTabState extends State<SkillTab> {
             ),
             child: TextField(
               controller: _searchController,
-              onChanged: (val) => setState(() {
-                _searchQuery = val;
-                _selectedIndex = null;
-                _currentPage = 0;
-                _windowStart = 0;
-                widget.onSkillSelected?.call(false);
-              }),
+              onSubmitted: _onSearch,
+              textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: '배우고 싶은 스킬을 검색하세요.',
                 hintStyle: YouthFieldTextStyle.placeholder.copyWith(
@@ -103,238 +92,120 @@ class SkillTabState extends State<SkillTab> {
                   horizontal: 16,
                   vertical: 14,
                 ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Symbols.search,
+                      color: YouthFieldColor.blue700, size: 20),
+                  onPressed: () => _onSearch(_searchController.text),
+                ),
               ),
             ),
           ),
         ),
         const SizedBox(height: 20),
-        _buildBody(),
-        if (_selectedIndex == null &&
-            _searchQuery.trim().isEmpty &&
-            _totalPages > 1)
-          DiaryPaginationBar(
-            currentPage: _currentPage,
-            totalPages: _totalPages,
-            windowStart: _windowStart,
-            onPageTap: _onPageTap,
-            onPrevWindow: _onPrevWindow,
-            onNextWindow: _onNextWindow,
+        // 콘텐츠 (SingleChildScrollView 안에 있으므로 Expanded 사용 불가)
+        videosAsync.when(
+          loading: () => const SizedBox(
+            height: 200,
+            child: Center(
+              child: CircularProgressIndicator(color: YouthFieldColor.blue700),
+            ),
           ),
+          error: (_, __) => SizedBox(
+            height: 200,
+            child: Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Symbols.wifi_off,
+                      size: 40, color: YouthFieldColor.black300),
+                  const SizedBox(height: 12),
+                  Text(
+                    '영상을 불러오지 못했습니다.',
+                    style: YouthFieldTextStyle.body4
+                        .copyWith(color: YouthFieldColor.black500),
+                  ),
+                  const SizedBox(height: 16),
+                  GestureDetector(
+                    onTap: () => ref.invalidate(skillVideosProvider),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 20, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: YouthFieldColor.blue700,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                      child: Text(
+                        '다시 시도',
+                        style: YouthFieldTextStyle.smallButton
+                            .copyWith(color: YouthFieldColor.white),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          data: (result) => _buildGrid(result.videos),
+        ),
       ],
     );
   }
 
-  Widget _buildBody() {
-    if (_selectedIndex != null) {
-      return _buildDetail(skillMockData[_selectedIndex!]);
-    }
-    final query = _searchQuery.trim().toLowerCase();
-    if (query.isNotEmpty) {
-      final results = <MapEntry<int, SkillData>>[];
-      for (var i = 0; i < skillMockData.length; i++) {
-        final s = skillMockData[i];
-        if (s.title.toLowerCase().contains(query) ||
-            s.subtitle.toLowerCase().contains(query)) {
-          results.add(MapEntry(i, s));
-        }
-      }
-      return _buildSearchResults(results);
-    }
-    return _buildGrid();
-  }
-
-  Widget _buildGrid() {
-    const double spacing = 12;
-    final start = _currentPage * kSkillPageSize;
-    final end = (start + kSkillPageSize).clamp(0, skillMockData.length);
-    final pageItems = skillMockData.sublist(start, end);
-
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 0, 24, 40),
-      child: LayoutBuilder(
-        builder: (context, constraints) {
-          final cols = (constraints.maxWidth / 240).floor().clamp(2, 4);
-          final cardWidth =
-              (constraints.maxWidth - spacing * (cols - 1)) / cols;
-          final cardHeight = cardWidth * 9 / 16;
-          return Wrap(
-            spacing: spacing,
-            runSpacing: spacing,
-            children: List.generate(pageItems.length, (i) {
-              final originalIndex = start + i;
-              final s = pageItems[i];
-              return SizedBox(
-                width: cardWidth,
-                height: cardHeight,
-                child: SkillCard(
-                  title: s.title,
-                  subtitle: s.subtitle,
-                  onTap: () => _select(originalIndex),
-                ),
-              );
-            }),
-          );
-        },
-      ),
-    );
-  }
-
-  Widget _buildSearchResults(List<MapEntry<int, SkillData>> results) {
-    if (results.isEmpty) {
+  Widget _buildGrid(List<YoutubeVideo> videos) {
+    if (videos.isEmpty) {
       return const Padding(
         padding: EdgeInsets.symmetric(vertical: 60),
         child: Center(child: Text('검색 결과가 없습니다.')),
       );
     }
-    return Column(
-      children: results.map((entry) {
-        final s = entry.value;
-        return InkWell(
-          splashColor: Colors.transparent,
-          highlightColor: Colors.transparent,
-          hoverColor: YouthFieldColor.blue50,
-          onTap: () {
-            setState(() {
-              _searchQuery = '';
-              _searchController.clear();
-            });
-            _select(entry.key);
-          },
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        s.title,
-                        style: YouthFieldTextStyle.body4.copyWith(
-                          color: YouthFieldColor.black800,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        s.subtitle,
-                        style: YouthFieldTextStyle.placeholder.copyWith(
-                          color: YouthFieldColor.black500,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const Icon(
-                  Symbols.arrow_back_ios,
-                  color: YouthFieldColor.black500,
-                  size: 20,
-                ),
-              ],
-            ),
-          ),
-        );
-      }).toList(),
-    );
-  }
 
-  Widget _buildDetail(SkillData s) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(24, 8, 24, 40),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      s.title,
-                      style: YouthFieldTextStyle.body3.copyWith(
-                        color: YouthFieldColor.black800,
-                        fontWeight: FontWeight.bold,
-                      ),
+    final totalPages = (videos.length / kSkillPageSize).ceil();
+    final start = _currentPage * kSkillPageSize;
+    final end = (start + kSkillPageSize).clamp(0, videos.length);
+    final pageItems = videos.sublist(start, end);
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              const spacing = 12.0;
+              final cols = (constraints.maxWidth / 240).floor().clamp(2, 4);
+              final cardWidth =
+                  (constraints.maxWidth - spacing * (cols - 1)) / cols;
+              final cardHeight = cardWidth * 9 / 16;
+
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: pageItems.map((v) {
+                  return SizedBox(
+                    width: cardWidth,
+                    height: cardHeight,
+                    child: SkillCard(
+                      title: v.title,
+                      subtitle: v.channelTitle,
+                      thumbnailUrl: v.thumbnailUrl,
+                      onTap: () => _openYoutube(v.youtubeUrl),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      s.subtitle,
-                      style: YouthFieldTextStyle.textCount.copyWith(
-                        color: YouthFieldColor.black500,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (s.youtubeUrl != null)
-                GestureDetector(
-                  onTap: () async {
-                    final url = Uri.tryParse(s.youtubeUrl!);
-                    if (url != null && await canLaunchUrl(url)) {
-                      await launchUrl(
-                        url,
-                        mode: LaunchMode.externalApplication,
-                      );
-                    }
-                  },
-                  child: SvgPicture.asset(
-                    'assets/svg/youtube_logo.svg',
-                    width: 32,
-                    height: 32,
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 20),
-          ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: AspectRatio(
-                aspectRatio: 16 / 9,
-                child: Container(color: YouthFieldColor.black50),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Wrap(
-            spacing: 8,
-            runSpacing: 8,
-            children: List.generate(s.steps.length, (i) {
-              final isSelected = i == _stepIndex;
-              return GestureDetector(
-                onTap: () => setState(() => _stepIndex = i),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 6,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected
-                        ? YouthFieldColor.blue700
-                        : YouthFieldColor.blue300,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                  child: Text(
-                    s.steps[i].title,
-                    style: YouthFieldTextStyle.smallButton.copyWith(
-                      color: YouthFieldColor.white,
-                    ),
-                  ),
-                ),
+                  );
+                }).toList(),
               );
-            }),
+            },
           ),
-          const SizedBox(height: 20),
-          Text(
-            s.steps[_stepIndex].description,
-            style: YouthFieldTextStyle.textCount.copyWith(
-              color: YouthFieldColor.black800,
-            ),
+        ),
+        if (totalPages > 1)
+          DiaryPaginationBar(
+            currentPage: _currentPage,
+            totalPages: totalPages,
+            windowStart: _windowStart,
+            onPageTap: _onPageTap,
+            onPrevWindow: _onPrevWindow,
+            onNextWindow: _onNextWindow,
           ),
-        ],
-      ),
+        const SizedBox(height: 40),
+      ],
     );
   }
 }
