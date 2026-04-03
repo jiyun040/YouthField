@@ -15,7 +15,7 @@ class UserSession {
   String? name;
   Uint8List? profileImageBytes;
   UserType? userType;
-  String? staffRole; // '감독' or '코치' (UserType.staff 일 때만)
+  String? staffRole;
   String? team;
   String? position;
   String? birthdate;
@@ -23,7 +23,6 @@ class UserSession {
 
   bool get hasData => name != null && userType != null;
 
-  // 앱 시작 시 또는 로그인 감지 시 호출
   Future<void> loadFromPrefs() async {
     final prefs = await SharedPreferences.getInstance();
     name = prefs.getString('user_name');

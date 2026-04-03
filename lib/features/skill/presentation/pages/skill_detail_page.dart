@@ -35,7 +35,7 @@ class SkillDetailPage extends StatelessWidget {
                     size: 28,
                   ),
                   onPressed: () {
-                    // TODO: YouTube 링크 열기
+
                   },
                 ),
               ]

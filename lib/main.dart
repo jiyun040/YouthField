@@ -12,24 +12,22 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
-  // 로그인 상태 및 프로필 여부를 앱 시작 시 미리 확인
   final home = await _resolveHome();
 
   runApp(ProviderScope(child: YouthFieldApp(home: home)));
 }
 
-/// 앱 시작 시 진입 화면 결정
 Future<Widget> _resolveHome() async {
   final user = FirebaseAuth.instance.currentUser;
-  if (user == null) return const OnboardingPage(); // 미로그인 → 온보딩
+  if (user == null) return const OnboardingPage();
 
   final prefs = await SharedPreferences.getInstance();
   final hasProfile =
       prefs.getString('user_name') != null &&
       prefs.getString('user_type') != null;
 
-  if (hasProfile) return const MainPage();        // 기존 유저 → 바로 메인
-  return const ProfileSetupPage();                // 프로필 미설정 → 프로필 설정
+  if (hasProfile) return const MainPage();
+  return const ProfileSetupPage();
 }
 
 class YouthFieldApp extends StatelessWidget {

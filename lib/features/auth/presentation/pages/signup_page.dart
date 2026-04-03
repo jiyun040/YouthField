@@ -19,7 +19,7 @@ class _SignupPageState extends State<SignupPage> {
   final _codeController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   bool _passwordVisible = false;
   bool _confirmPasswordVisible = false;
   bool _codeSent = false;
@@ -92,7 +92,6 @@ class _SignupPageState extends State<SignupPage> {
             ),
           ),
 
-          // 폼
           Center(
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 540),

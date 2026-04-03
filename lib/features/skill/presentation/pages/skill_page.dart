@@ -33,7 +33,6 @@ class SkillData {
 
 const List<SkillData> skillMockData = [];
 
-
 class SkillPage extends ConsumerStatefulWidget {
   const SkillPage({super.key});
 
@@ -227,8 +226,6 @@ class _SkillPageState extends ConsumerState<SkillPage> {
     }
   }
 }
-
-// ─── 상태 뷰 ────────────────────────────────────
 
 class _LoadingView extends StatelessWidget {
   const _LoadingView();

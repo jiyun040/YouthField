@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:youthfield/core/constants/color.dart';
 
 class YouthFieldTextStyle {
-  /// title
+
   static const TextStyle title1 = TextStyle(
     fontSize: 40,
     fontWeight: FontWeight.w700,
@@ -23,7 +23,6 @@ class YouthFieldTextStyle {
     fontWeight: FontWeight.w700,
   );
 
-  /// body
   static const TextStyle body1 = TextStyle(
     fontSize: 30,
     fontWeight: FontWeight.w400,
@@ -44,7 +43,6 @@ class YouthFieldTextStyle {
     fontWeight: FontWeight.w700,
   );
 
-  /// etc
   static const TextStyle placeholder = TextStyle(
     fontSize: 12,
     fontWeight: FontWeight.w400,

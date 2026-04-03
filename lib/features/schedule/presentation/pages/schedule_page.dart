@@ -82,8 +82,6 @@ class _ScheduleBodyState extends ConsumerState<ScheduleBody> {
   }
 }
 
-// ─────────────────────────────────────────────
-
 class _ScheduleList extends ConsumerWidget {
   final void Function(KleagueLeague, List<ScheduleMatch>) onSelectLeague;
 
@@ -142,7 +140,8 @@ class _ScheduleList extends ConsumerWidget {
           ),
         ),
       ),
-      data: (result) {
+      data: (feed) {
+        final result = feed.kleague;
         final leagues = result.leagues;
         if (leagues.isEmpty) {
           return Padding(
@@ -157,12 +156,13 @@ class _ScheduleList extends ConsumerWidget {
           );
         }
 
-        // leagueId → 경기 목록 매핑 (날짜 오름차순 정렬)
         final matchesByLeague = <int, List<ScheduleMatch>>{};
         for (final m in result.matches) {
-          matchesByLeague.putIfAbsent(m.leagueId, () => []).add(m.toEntity());
+          matchesByLeague
+              .putIfAbsent(m.leagueId, () => [])
+              .add(m.toEntity(emblemByTeam: feed.emblemByTeam));
         }
-        // 각 리그 경기를 날짜 기준 오름차순 정렬
+
         for (final list in matchesByLeague.values) {
           list.sort((a, b) => a.date.compareTo(b.date));
         }

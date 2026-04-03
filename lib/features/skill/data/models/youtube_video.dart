@@ -25,7 +25,6 @@ class YoutubeVideo {
     );
   }
 
-  /// YouTube API가 HTML 엔티티를 반환할 때 디코딩
   static String _decodeTitle(String raw) {
     return raw
         .replaceAll('&amp;', '&')

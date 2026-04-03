@@ -27,12 +27,12 @@ class _ScheduleDetailPageState extends State<ScheduleDetailPage> {
     for (final m in widget.event.matches) {
       (_grouped[m.month] ??= []).add(m);
     }
-    // 월 내 경기도 날짜 오름차순 정렬
+
     for (final list in _grouped.values) {
       list.sort((a, b) => a.date.compareTo(b.date));
     }
     _months = _grouped.keys.toList()..sort();
-    // 오늘 이후 경기가 있는 가장 가까운 달로 초기 선택
+
     final today = DateTime.now();
     _selectedMonth = _months.firstWhere(
       (month) => month >= today.month,
