@@ -77,6 +77,7 @@ class _ProfileSetupPageState extends ConsumerState<ProfileSetupPage> {
         source: ImageSource.gallery,
         maxWidth: 800,
         maxHeight: 800,
+        imageQuality: 80,
       );
       if (image == null) return;
       final bytes = await image.readAsBytes();
