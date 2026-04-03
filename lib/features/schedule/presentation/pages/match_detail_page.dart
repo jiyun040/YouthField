@@ -3,6 +3,7 @@ import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/schedule/domain/entities/schedule.dart';
+import 'package:youthfield/features/schedule/presentation/widgets/team_badge.dart';
 
 class MatchDetailPage extends StatelessWidget {
   final ScheduleMatch match;
@@ -40,9 +41,17 @@ class MatchDetailPage extends StatelessWidget {
                       _LineupSection(
                         homeTeam: match.homeTeam,
                         awayTeam: match.awayTeam,
+                        homeTeamLogoUrl: match.homeTeamLogoUrl,
+                        awayTeamLogoUrl: match.awayTeamLogoUrl,
                         homePlayers: match.homePlayers,
                         awayPlayers: match.awayPlayers,
                       ),
+                    ],
+                    if (match.events.isEmpty &&
+                        match.homePlayers.isEmpty &&
+                        match.awayPlayers.isEmpty) ...[
+                      const SizedBox(height: 24),
+                      const _DetailUnavailableNotice(),
                     ],
                     const SizedBox(height: 40),
                   ],
@@ -50,6 +59,27 @@ class MatchDetailPage extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DetailUnavailableNotice extends StatelessWidget {
+  const _DetailUnavailableNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: YouthFieldColor.blue50,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '공개 일정에서는 점수와 팀 정보까지만 제공되고, 선발/교체/경고 같은 세부 기록은 JoinKFA 로그인 권한이 필요한 경기에서는 표시되지 않을 수 있습니다.',
+        style: YouthFieldTextStyle.placeholder.copyWith(
+          color: YouthFieldColor.black500,
         ),
       ),
     );
@@ -129,13 +159,22 @@ class _ScoreCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
-                child: Text(
-                  match.homeTeam,
-                  textAlign: TextAlign.center,
-                  style: YouthFieldTextStyle.body4.copyWith(
-                    color: YouthFieldColor.blue700,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Column(
+                  children: [
+                    TeamBadge(
+                      teamName: match.homeTeam,
+                      logoUrl: match.homeTeamLogoUrl,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      match.homeTeam,
+                      textAlign: TextAlign.center,
+                      style: YouthFieldTextStyle.body4.copyWith(
+                        color: YouthFieldColor.blue700,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
               Padding(
@@ -151,16 +190,34 @@ class _ScoreCard extends StatelessWidget {
                 ),
               ),
               Expanded(
-                child: Text(
-                  match.awayTeam,
-                  textAlign: TextAlign.center,
-                  style: YouthFieldTextStyle.body4.copyWith(
-                    color: YouthFieldColor.black800,
-                    fontWeight: FontWeight.w700,
-                  ),
+                child: Column(
+                  children: [
+                    TeamBadge(
+                      teamName: match.awayTeam,
+                      logoUrl: match.awayTeamLogoUrl,
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      match.awayTeam,
+                      textAlign: TextAlign.center,
+                      style: YouthFieldTextStyle.body4.copyWith(
+                        color: YouthFieldColor.black800,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
+          ),
+
+          const SizedBox(height: 12),
+          Text(
+            '${match.date}  ${match.time}  |  ${match.venue}',
+            textAlign: TextAlign.center,
+            style: YouthFieldTextStyle.placeholder.copyWith(
+              color: YouthFieldColor.black500,
+            ),
           ),
 
           if (hasResult) ...[
@@ -176,9 +233,9 @@ class _ScoreCard extends StatelessWidget {
               ],
             ),
           ] else ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: 4),
             Text(
-              '${match.date}  ${match.time}  |  ${match.venue}',
+              '경기 결과 집계 전입니다.',
               textAlign: TextAlign.center,
               style: YouthFieldTextStyle.placeholder.copyWith(
                 color: YouthFieldColor.black500,
@@ -352,12 +409,16 @@ class _EventRow extends StatelessWidget {
 class _LineupSection extends StatelessWidget {
   final String homeTeam;
   final String awayTeam;
+  final String? homeTeamLogoUrl;
+  final String? awayTeamLogoUrl;
   final List<PlayerRecord> homePlayers;
   final List<PlayerRecord> awayPlayers;
 
   const _LineupSection({
     required this.homeTeam,
     required this.awayTeam,
+    this.homeTeamLogoUrl,
+    this.awayTeamLogoUrl,
     required this.homePlayers,
     required this.awayPlayers,
   });
@@ -383,6 +444,7 @@ class _LineupSection extends StatelessWidget {
                   Expanded(
                     child: _TeamLineup(
                       teamName: homeTeam,
+                      logoUrl: homeTeamLogoUrl,
                       players: homePlayers,
                     ),
                   ),
@@ -390,6 +452,7 @@ class _LineupSection extends StatelessWidget {
                   Expanded(
                     child: _TeamLineup(
                       teamName: awayTeam,
+                      logoUrl: awayTeamLogoUrl,
                       players: awayPlayers,
                     ),
                   ),
@@ -398,9 +461,17 @@ class _LineupSection extends StatelessWidget {
             }
             return Column(
               children: [
-                _TeamLineup(teamName: homeTeam, players: homePlayers),
+                _TeamLineup(
+                  teamName: homeTeam,
+                  logoUrl: homeTeamLogoUrl,
+                  players: homePlayers,
+                ),
                 const SizedBox(height: 20),
-                _TeamLineup(teamName: awayTeam, players: awayPlayers),
+                _TeamLineup(
+                  teamName: awayTeam,
+                  logoUrl: awayTeamLogoUrl,
+                  players: awayPlayers,
+                ),
               ],
             );
           },
@@ -412,9 +483,14 @@ class _LineupSection extends StatelessWidget {
 
 class _TeamLineup extends StatelessWidget {
   final String teamName;
+  final String? logoUrl;
   final List<PlayerRecord> players;
 
-  const _TeamLineup({required this.teamName, required this.players});
+  const _TeamLineup({
+    required this.teamName,
+    this.logoUrl,
+    required this.players,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -423,65 +499,94 @@ class _TeamLineup extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: Text(
-            teamName,
-            textAlign: TextAlign.center,
-            style: YouthFieldTextStyle.body4.copyWith(
-              color: YouthFieldColor.black800,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Container(
-                decoration: const BoxDecoration(
-                  color: YouthFieldColor.blue50,
-                ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                child: Row(
-                  children: const [
-                    _HeaderCell('배번', flex: 1),
-                    _HeaderCell('포지션', flex: 2),
-                    _HeaderCell('선수이름', flex: 3),
-                    _HeaderCell('득점', flex: 1),
-                    _HeaderCell('도움', flex: 1),
-                    _HeaderCell('경고', flex: 1),
-                    _HeaderCell('퇴장', flex: 1),
-                  ],
+              TeamBadge(teamName: teamName, logoUrl: logoUrl),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  teamName,
+                  textAlign: TextAlign.center,
+                  style: YouthFieldTextStyle.body4.copyWith(
+                    color: YouthFieldColor.black800,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              ...players.map((p) {
-                return Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 10,
-                  ),
-                  child: Row(
-                    children: [
-                      _DataCell('${p.number}', flex: 1),
-                      _DataCell(p.position, flex: 2),
-                      _DataCell(p.name, flex: 3, bold: true),
-                      _DataCell(p.goals > 0 ? '${p.goals}' : '-', flex: 1),
-                      _DataCell(
-                        p.assists > 0 ? '${p.assists}' : '-',
-                        flex: 1,
-                      ),
-                      _DataCell(
-                        p.yellowCards > 0 ? '${p.yellowCards}' : '-',
-                        flex: 1,
-                      ),
-                      _DataCell(p.redCard ? '1' : '-', flex: 1),
-                    ],
-                  ),
-                );
-              }),
             ],
           ),
         ),
+        if (players.isEmpty)
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+            decoration: BoxDecoration(
+              color: YouthFieldColor.white,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: YouthFieldColor.black50),
+            ),
+            child: Text(
+              '등록된 선수 기록이 없습니다.',
+              textAlign: TextAlign.center,
+              style: YouthFieldTextStyle.placeholder.copyWith(
+                color: YouthFieldColor.black500,
+              ),
+            ),
+          ),
+        if (players.isNotEmpty)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Container(
+                  decoration: const BoxDecoration(
+                    color: YouthFieldColor.blue50,
+                  ),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  child: Row(
+                    children: const [
+                      _HeaderCell('배번', flex: 1),
+                      _HeaderCell('포지션', flex: 2),
+                      _HeaderCell('선수이름', flex: 3),
+                      _HeaderCell('득점', flex: 1),
+                      _HeaderCell('도움', flex: 1),
+                      _HeaderCell('경고', flex: 1),
+                      _HeaderCell('퇴장', flex: 1),
+                    ],
+                  ),
+                ),
+                ...players.map((p) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
+                    child: Row(
+                      children: [
+                        _DataCell('${p.number}', flex: 1),
+                        _DataCell(p.position, flex: 2),
+                        _DataCell(p.name, flex: 3, bold: true),
+                        _DataCell(p.goals > 0 ? '${p.goals}' : '-', flex: 1),
+                        _DataCell(
+                          p.assists > 0 ? '${p.assists}' : '-',
+                          flex: 1,
+                        ),
+                        _DataCell(
+                          p.yellowCards > 0 ? '${p.yellowCards}' : '-',
+                          flex: 1,
+                        ),
+                        _DataCell(p.redCard ? '1' : '-', flex: 1),
+                      ],
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
       ],
     );
   }

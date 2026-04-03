@@ -23,7 +23,10 @@ class MatchRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            TeamBadge(teamName: match.homeTeam),
+            TeamBadge(
+              teamName: match.homeTeam,
+              logoUrl: match.homeTeamLogoUrl,
+            ),
             const SizedBox(width: 10),
             Expanded(
               flex: 3,
@@ -74,10 +77,13 @@ class MatchRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            TeamBadge(teamName: match.awayTeam),
+            TeamBadge(
+              teamName: match.awayTeam,
+              logoUrl: match.awayTeamLogoUrl,
+            ),
           ],
         ),
-      ), // Container
-    ); // GestureDetector
+      ),
+    );
   }
 }

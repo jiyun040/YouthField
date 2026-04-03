@@ -1,12 +1,3 @@
-/**
- * Vercel Serverless Function — YouTube Search Proxy
- *
- * Flutter Web에서 직접 YouTube API를 호출하면 API 키가 노출되므로
- * 이 프록시를 통해 서버 사이드에서 호출합니다.
- *
- * GET /api/youtube?q=축구+스킬&maxResults=20&pageToken=xxx
- */
-
 const YOUTUBE_API = 'https://www.googleapis.com/youtube/v3/search';
 
 export default async function handler(req, res) {
@@ -48,7 +39,6 @@ export default async function handler(req, res) {
       return res.status(ytRes.status).json({ error: data?.error?.message ?? 'YouTube API error' });
     }
 
-    // 필요한 필드만 추려서 반환 (API 키 등 민감 정보 노출 방지)
     const items = (data.items ?? []).map((item) => ({
       videoId: item.id?.videoId,
       title: item.snippet?.title,

@@ -1,10 +1,3 @@
-/**
- * Vercel Serverless Function — K League Youth Schedule Proxy
- *
- * GET /api/schedule?year=2026
- *   → 고등+중등 전체 리그 목록과 각 리그별 경기 일정 모두 반환
- */
-
 const BASE = 'https://www.kleague.com';
 const STYLE = 'LEAGUE2';
 
@@ -16,9 +9,9 @@ async function getSessionCookies() {
     },
   });
   const raw = res.headers.get('set-cookie') || '';
-  // set-cookie 는 여러 개가 콤마로 이어질 수 있음
+
   const cookies = {};
-  // 각 쿠키를 파싱
+
   for (const part of raw.split(/,(?=[^ ])/)) {
     const kv = part.split(';')[0].trim();
     const idx = kv.indexOf('=');
@@ -42,7 +35,6 @@ async function postJson(endpoint, body, cookieStr) {
     body: JSON.stringify(body),
   });
 
-  // 응답 쿠키 병합
   const newCookieRaw = res.headers.get('set-cookie') || '';
   let merged = cookieStr;
   if (newCookieRaw) {
@@ -52,7 +44,7 @@ async function postJson(endpoint, body, cookieStr) {
       const idx = kv.indexOf('=');
       if (idx > 0) newCookies[kv.slice(0, idx).trim()] = kv.slice(idx + 1).trim();
     }
-    // 기존 쿠키에 덮어쓰기
+
     const existing = {};
     for (const part of cookieStr.split(';')) {
       const kv = part.trim();
@@ -78,10 +70,9 @@ export default async function handler(req, res) {
   const { year = '2026' } = req.query;
 
   try {
-    // 1) 세션 획득
+
     let cookieStr = await getSessionCookies();
 
-    // 2) yearChange → 리그 목록 + A그룹 경기
     const yearRes = await postJson(
       '/youth/junior/yearChange.do',
       { year, style: STYLE },
@@ -95,16 +86,14 @@ export default async function handler(req, res) {
     }
 
     const leagues = yearData.data?.leagueNameList ?? [];
-    // leagueId → 경기 목록
+
     const allSchedules = {};
 
-    // A그룹 (yearChange 에서 이미 받음)
     for (const m of (yearData.data?.scheduleList ?? [])) {
       if (!allSchedules[m.leagueId]) allSchedules[m.leagueId] = [];
       allSchedules[m.leagueId].push(m);
     }
 
-    // 나머지 리그 (B, C 고등 / A, B, C 중등) 순차 조회
     const remainingLeagues = leagues.filter(
       (l) => !allSchedules[l.leagueId] || allSchedules[l.leagueId].length === 0
     );
@@ -127,12 +116,13 @@ export default async function handler(req, res) {
       }
     }
 
-    // 전체 scheduleList 를 하나로 합쳐서 반환
     const mergedSchedules = Object.values(allSchedules).flat();
 
     return res.status(200).json({
       leagueNameList: leagues,
       scheduleList: mergedSchedules,
+
+      _sampleMatch: mergedSchedules[0] ?? null,
     });
 
   } catch (err) {

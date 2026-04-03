@@ -58,7 +58,7 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   Widget build(BuildContext context) {
     final eventsAsync = ref
         .watch(scheduleProvider)
-        .whenData((r) => r.toScheduleEvents());
+        .whenData((feed) => feed.toScheduleEvents());
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
