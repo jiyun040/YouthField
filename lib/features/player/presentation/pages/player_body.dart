@@ -42,8 +42,12 @@ class _PlayerBodyState extends State<PlayerBody> {
     super.dispose();
   }
 
+  String _normalizeSearchText(String value) {
+    return value.toLowerCase().replaceAll(RegExp(r'\s+'), '');
+  }
+
   List<({int originalIndex, PlayerInfo player})> get _filtered {
-    final query = _searchQuery.toLowerCase();
+    final query = _normalizeSearchText(_searchQuery);
     final indexed = allClubPlayers
         .asMap()
         .entries
@@ -54,8 +58,14 @@ class _PlayerBodyState extends State<PlayerBody> {
       final p = item.player;
 
       if (query.isNotEmpty) {
+        final normalizedName = _normalizeSearchText(p.name);
+        final normalizedSchool = _normalizeSearchText(p.school);
+        final normalizedLocation = _normalizeSearchText(p.location);
+
         final matchesSearch =
-            p.name.contains(query) || p.school.contains(query);
+            normalizedName.contains(query) ||
+            normalizedSchool.contains(query) ||
+            normalizedLocation.contains(query);
         if (!matchesSearch) return false;
       }
 
