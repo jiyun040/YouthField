@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
+import 'package:youthfield/core/services/history_service.dart';
+import 'package:youthfield/features/mypage/domain/entities/watched_skill.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import 'package:youthfield/features/skill/data/models/youtube_video.dart';
 import 'package:youthfield/features/skill/presentation/providers/skill_provider.dart';
@@ -27,6 +30,7 @@ class SkillTabState extends ConsumerState<SkillTab> {
   int _windowStart = 0;
 
   bool handleBack() => false;
+
   bool get hasSelection => false;
 
   void _onPageTap(int page) {
@@ -37,6 +41,7 @@ class SkillTabState extends ConsumerState<SkillTab> {
   }
 
   void _onPrevWindow() => setState(() => _windowStart -= kSkillWindowSize);
+
   void _onNextWindow() => setState(() => _windowStart += kSkillWindowSize);
 
   void _onSearch(String val) {
@@ -48,8 +53,16 @@ class SkillTabState extends ConsumerState<SkillTab> {
     });
   }
 
-  Future<void> _openYoutube(String url) async {
-    final uri = Uri.parse(url);
+  Future<void> _openYoutube(YoutubeVideo video) async {
+    await HistoryService.addWatchedSkill(
+      WatchedSkill(
+        id: video.videoId.isNotEmpty ? video.videoId : video.title,
+        title: video.title,
+        subtitle: video.channelTitle,
+        thumbnailUrl: video.thumbnailUrl,
+      ),
+    );
+    final uri = Uri.parse(video.youtubeUrl);
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     }
@@ -86,13 +99,13 @@ class SkillTabState extends ConsumerState<SkillTab> {
                 ),
                 border: InputBorder.none,
                 isDense: true,
-                contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 14,
-                ),
+                contentPadding: const EdgeInsets.all(16),
                 suffixIcon: IconButton(
-                  icon: const Icon(Symbols.search,
-                      color: YouthFieldColor.blue700, size: 20),
+                  icon: const Icon(
+                    Symbols.search,
+                    color: YouthFieldColor.blue700,
+                    size: 20,
+                  ),
                   onPressed: () => _onSearch(_searchController.text),
                 ),
               ),
@@ -101,10 +114,35 @@ class SkillTabState extends ConsumerState<SkillTab> {
         ),
         const SizedBox(height: 20),
         videosAsync.when(
-          loading: () => const SizedBox(
-            height: 200,
-            child: Center(
-              child: CircularProgressIndicator(color: YouthFieldColor.blue700),
+          loading: () => Padding(
+            padding: const EdgeInsets.fromLTRB(24, 0, 24, 16),
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                const spacing = 12.0;
+                final cols = (constraints.maxWidth / 240).floor().clamp(2, 4);
+                final cardWidth =
+                    (constraints.maxWidth - spacing * (cols - 1)) / cols;
+                final cardHeight = cardWidth * 9 / 16;
+                return Shimmer.fromColors(
+                  baseColor: YouthFieldColor.background,
+                  highlightColor: YouthFieldColor.white,
+                  child: Wrap(
+                    spacing: spacing,
+                    runSpacing: spacing,
+                    children: List.generate(
+                      cols * 3,
+                      (_) => Container(
+                        width: cardWidth,
+                        height: cardHeight,
+                        decoration: BoxDecoration(
+                          color: YouthFieldColor.white,
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
           error: (_, __) => SizedBox(
@@ -113,28 +151,35 @@ class SkillTabState extends ConsumerState<SkillTab> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Symbols.wifi_off,
-                      size: 40, color: YouthFieldColor.black300),
+                  const Icon(
+                    Symbols.wifi_off,
+                    size: 40,
+                    color: YouthFieldColor.black300,
+                  ),
                   const SizedBox(height: 12),
                   Text(
                     '영상을 불러오지 못했습니다.',
-                    style: YouthFieldTextStyle.body4
-                        .copyWith(color: YouthFieldColor.black500),
+                    style: YouthFieldTextStyle.body4.copyWith(
+                      color: YouthFieldColor.black500,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   GestureDetector(
                     onTap: () => ref.invalidate(skillVideosProvider),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 8),
+                        horizontal: 20,
+                        vertical: 8,
+                      ),
                       decoration: BoxDecoration(
                         color: YouthFieldColor.blue700,
                         borderRadius: BorderRadius.circular(100),
                       ),
                       child: Text(
                         '다시 시도',
-                        style: YouthFieldTextStyle.smallButton
-                            .copyWith(color: YouthFieldColor.white),
+                        style: YouthFieldTextStyle.smallButton.copyWith(
+                          color: YouthFieldColor.white,
+                        ),
                       ),
                     ),
                   ),
@@ -186,7 +231,7 @@ class SkillTabState extends ConsumerState<SkillTab> {
                       title: v.title,
                       subtitle: v.channelTitle,
                       thumbnailUrl: v.thumbnailUrl,
-                      onTap: () => _openYoutube(v.youtubeUrl),
+                      onTap: () => _openYoutube(v),
                     ),
                   );
                 }).toList(),

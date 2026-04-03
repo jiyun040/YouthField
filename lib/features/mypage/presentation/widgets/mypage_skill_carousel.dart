@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/mypage/domain/entities/watched_skill.dart';
@@ -16,6 +17,13 @@ class MypageSkillCarousel extends StatefulWidget {
 
 class _MypageSkillCarouselState extends State<MypageSkillCarousel> {
   final _scrollController = ScrollController();
+
+  Future<void> _openYoutube(String videoId) async {
+    final uri = Uri.parse('https://www.youtube.com/watch?v=$videoId');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
 
   @override
   void dispose() {
@@ -79,7 +87,8 @@ class _MypageSkillCarouselState extends State<MypageSkillCarousel> {
                         child: SkillCard(
                           title: skill.title,
                           subtitle: skill.subtitle,
-                          onTap: () {},
+                          thumbnailUrl: skill.thumbnailUrl,
+                          onTap: () => _openYoutube(skill.id),
                         ),
                       ),
                     );

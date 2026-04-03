@@ -13,6 +13,10 @@ import 'package:youthfield/features/auth/presentation/pages/login_page.dart';
 import 'package:youthfield/features/diary/presentation/providers/diary_provider.dart';
 import 'package:youthfield/features/mypage/presentation/pages/mypage_page.dart';
 import 'package:youthfield/features/mypage/presentation/providers/mypage_provider.dart';
+import 'package:youthfield/core/services/history_service.dart';
+import 'package:youthfield/features/mypage/domain/entities/recent_player.dart';
+import 'package:youthfield/features/schedule/presentation/providers/schedule_provider.dart';
+import 'package:youthfield/features/skill/presentation/providers/skill_provider.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
 import 'package:youthfield/features/schedule/presentation/pages/schedule_page.dart';
@@ -58,6 +62,10 @@ class _MainPageState extends ConsumerState<MainPage> {
   void initState() {
     super.initState();
     _loadSession();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(scheduleProvider);
+      ref.read(skillVideosProvider);
+    });
   }
 
   Future<void> _loadSession() async {
@@ -242,6 +250,21 @@ class _MainPageState extends ConsumerState<MainPage> {
     setState(() => _selectedTab = -1);
   }
 
+  void _saveRecentPlayer(int index) {
+    final p = allClubPlayers[index];
+    HistoryService.addRecentPlayer(
+      RecentPlayer(
+        name: p.name,
+        school: p.school,
+        location: p.location,
+        position: p.position,
+        ageGroup: p.ageGroup,
+        number: p.number,
+        imageUrl: p.imageUrl,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -307,7 +330,9 @@ class _MainPageState extends ConsumerState<MainPage> {
           },
           onLogoTap: _onLogoTap,
           onProfileTap: _openMyPage,
-          profileImageBytes: isLoggedIn ? ref.watch(userSessionProvider).profileImageBytes : null,
+          profileImageBytes: isLoggedIn
+              ? ref.watch(userSessionProvider).profileImageBytes
+              : null,
           profilePhotoUrl: isLoggedIn ? firebaseUser.photoURL : null,
         ),
         YFMenuBar(
@@ -358,6 +383,7 @@ class _MainPageState extends ConsumerState<MainPage> {
           onPlayerTap: (name) {
             final index = allClubPlayers.indexWhere((p) => p.name == name);
             if (index == -1) return;
+            _saveRecentPlayer(index);
             setState(() {
               _selectedTab = 0;
               _selectedPlayerIndex = index;
@@ -367,7 +393,10 @@ class _MainPageState extends ConsumerState<MainPage> {
       case 0:
         return PlayerBody(
           selectedIndex: _selectedPlayerIndex,
-          onSelect: (i) => setState(() => _selectedPlayerIndex = i),
+          onSelect: (i) {
+            _saveRecentPlayer(i);
+            setState(() => _selectedPlayerIndex = i);
+          },
         );
       case 1:
         return SkillTab(key: _skillTabKey);

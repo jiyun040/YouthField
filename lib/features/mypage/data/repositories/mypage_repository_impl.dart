@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:youthfield/core/providers/user_session_provider.dart';
+import 'package:youthfield/core/services/history_service.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 import 'package:youthfield/features/mypage/domain/entities/player_stats.dart';
 import 'package:youthfield/features/mypage/domain/entities/user_profile.dart';
@@ -29,6 +30,9 @@ class UserSessionRepository implements MypageRepository {
           ..sort((a, b) => b.date.compareTo(a.date)))
         .take(3)
         .toList();
+
+    final watchedSkills = await HistoryService.getWatchedSkills();
+    final recentPlayers = await HistoryService.getRecentPlayers();
 
     switch (session.userType ?? UserType.general) {
       case UserType.player:
@@ -67,7 +71,8 @@ class UserSessionRepository implements MypageRepository {
             yellowCards: 0,
             redCards: 0,
           ),
-          watchedSkills: const [],
+          watchedSkills: watchedSkills,
+          recentPlayers: recentPlayers,
           recentDiaries: recentDiaries,
         );
       case UserType.staff:
@@ -84,8 +89,8 @@ class UserSessionRepository implements MypageRepository {
           profileImageBytes: bytes,
           profileImageUrl: photoUrl,
           teamRole: teamRole,
-          watchedSkills: const [],
-          recentPlayers: const [],
+          watchedSkills: watchedSkills,
+          recentPlayers: recentPlayers,
           recentDiaries: recentDiaries,
         );
       case UserType.general:
@@ -94,8 +99,8 @@ class UserSessionRepository implements MypageRepository {
           name: name,
           profileImageBytes: bytes,
           profileImageUrl: photoUrl,
-          watchedSkills: const [],
-          recentPlayers: const [],
+          watchedSkills: watchedSkills,
+          recentPlayers: recentPlayers,
           recentDiaries: recentDiaries,
         );
     }

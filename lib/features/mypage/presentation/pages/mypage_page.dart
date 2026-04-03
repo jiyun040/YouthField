@@ -3,11 +3,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
-import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
-import 'package:youthfield/features/diary/presentation/widgets/diary_list_row.dart';
+import 'package:youthfield/features/main/presentation/widgets/player_card.dart';
 import 'package:youthfield/features/mypage/domain/entities/player_stats.dart';
+import 'package:youthfield/features/mypage/domain/entities/recent_player.dart';
 import 'package:youthfield/features/mypage/domain/entities/user_profile.dart';
 import 'package:youthfield/features/mypage/presentation/pages/profile_edit_page.dart';
+import 'package:youthfield/features/mypage/presentation/pages/recent_players_page.dart';
+import 'package:youthfield/features/player/data/clubs/all_clubs_data.dart';
+import 'package:youthfield/features/player/presentation/pages/player_detail_scaffold.dart';
 import 'package:youthfield/features/mypage/presentation/providers/mypage_provider.dart';
 import 'package:youthfield/features/mypage/presentation/widgets/mypage_profile_header.dart';
 import 'package:youthfield/features/mypage/presentation/widgets/mypage_skill_carousel.dart';
@@ -35,18 +38,19 @@ class _MypagePageState extends ConsumerState<MypagePage> {
             child: profileAsync.when(
               loading: () => const Center(child: CircularProgressIndicator()),
               error: (e, _) => Center(child: Text('오류가 발생했습니다.')),
-              data: (profile) => SingleChildScrollView(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const SizedBox(height: 72),
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
-                      child: _buildWithProfile(profile),
+              data: (profile) =>
+                  SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 72),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(24, 16, 24, 40),
+                          child: _buildWithProfile(profile),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
+                  ),
             ),
           ),
           Positioned(top: 0, left: 0, right: 0, child: _buildSubHeader()),
@@ -135,7 +139,7 @@ class _MypagePageState extends ConsumerState<MypagePage> {
         MypagePage.spacing40,
         MypageSkillCarousel(skills: profile.watchedSkills),
         MypagePage.spacing40,
-        _buildDiarySection(profile.recentDiaries),
+        _buildRecentPlayersSection(profile.recentPlayers),
       ],
     );
   }
@@ -148,7 +152,7 @@ class _MypagePageState extends ConsumerState<MypagePage> {
         MypagePage.spacing40,
         MypageSkillCarousel(skills: profile.watchedSkills),
         MypagePage.spacing40,
-        _buildDiarySection(profile.recentDiaries),
+        _buildRecentPlayersSection(profile.recentPlayers),
       ],
     );
   }
@@ -161,26 +165,28 @@ class _MypagePageState extends ConsumerState<MypagePage> {
         MypagePage.spacing40,
         MypageSkillCarousel(skills: profile.watchedSkills),
         MypagePage.spacing40,
-        _buildDiarySection(profile.recentDiaries),
+        _buildRecentPlayersSection(profile.recentPlayers),
       ],
     );
   }
 
-  Widget _buildDiarySection(List<DiaryEntry> diaries) {
+  Widget _buildRecentPlayersSection(List<RecentPlayer> players) {
+    final preview = players.take(6).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('작성한 일지', style: YouthFieldTextStyle.body4),
+            Text('찾아본 선수', style: YouthFieldTextStyle.body4),
             GestureDetector(
-              onTap: widget.onDiaryMoreTap == null
-                  ? null
-                  : () {
-                      widget.onDiaryMoreTap!.call();
-                      Navigator.pop(context);
-                    },
+              onTap: () =>
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) => RecentPlayersPage(players: players),
+                    ),
+                  ),
               child: MouseRegion(
                 cursor: SystemMouseCursors.click,
                 child: Text(
@@ -194,8 +200,63 @@ class _MypagePageState extends ConsumerState<MypagePage> {
           ],
         ),
         MypagePage.spacing10,
-        ...diaries.map((entry) => DiaryListRow(entry: entry, onTap: () {})),
+        if (preview.isEmpty)
+          Text(
+            '아직 찾아본 선수가 없습니다.',
+            style: YouthFieldTextStyle.placeholder.copyWith(
+              color: YouthFieldColor.black300,
+            ),
+          )
+        else
+          LayoutBuilder(
+            builder: (context, constraints) {
+              const spacing = 12.0;
+              final cols = (constraints.maxWidth / 220).floor().clamp(2, 6);
+              final cardWidth =
+                  (constraints.maxWidth - spacing * (cols - 1)) / cols;
+              return Wrap(
+                spacing: spacing,
+                runSpacing: spacing,
+                children: preview.map((p) {
+                  return SizedBox(
+                    width: cardWidth,
+                    child: AspectRatio(
+                      aspectRatio: 3 / 4,
+                      child: MouseRegion(
+                        cursor: SystemMouseCursors.click,
+                        child: GestureDetector(
+                          onTap: () => _openPlayerDetail(p),
+                          child: PlayerCard(
+                            name: p.name,
+                            school: p.school,
+                            location: p.location,
+                            position: p.position,
+                            ageGroup: p.ageGroup,
+                            number: p.number,
+                            imageUrl: p.imageUrl,
+                          ),
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
       ],
+    );
+  }
+
+  void _openPlayerDetail(RecentPlayer p) {
+    final info = allClubPlayers.firstWhere(
+          (info) => info.name == p.name,
+      orElse: () => allClubPlayers.first,
+    );
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => PlayerDetailScaffold(player: info),
+      ),
     );
   }
 }

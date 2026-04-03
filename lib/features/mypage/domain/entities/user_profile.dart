@@ -27,6 +27,7 @@ class PlayerProfile extends UserProfile {
   final PlayerStats seasonStats;
   final PlayerStats nationalStats;
   final List<WatchedSkill> watchedSkills;
+  final List<RecentPlayer> recentPlayers;
   final List<DiaryEntry> recentDiaries;
 
   const PlayerProfile({
@@ -41,6 +42,7 @@ class PlayerProfile extends UserProfile {
     required this.seasonStats,
     required this.nationalStats,
     required this.watchedSkills,
+    this.recentPlayers = const [],
     required this.recentDiaries,
   });
 }

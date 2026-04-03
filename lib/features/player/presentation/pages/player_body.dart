@@ -44,21 +44,28 @@ class _PlayerBodyState extends State<PlayerBody> {
 
   List<({int originalIndex, PlayerInfo player})> get _filtered {
     final query = _searchQuery.toLowerCase();
-    final indexed = allClubPlayers.asMap().entries.map((e) => (originalIndex: e.key, player: e.value)).toList();
+    final indexed = allClubPlayers
+        .asMap()
+        .entries
+        .map((e) => (originalIndex: e.key, player: e.value))
+        .toList();
 
     final result = indexed.where((item) {
       final p = item.player;
 
       if (query.isNotEmpty) {
-        final matchesSearch = p.name.contains(query) || p.school.contains(query);
+        final matchesSearch =
+            p.name.contains(query) || p.school.contains(query);
         if (!matchesSearch) return false;
       }
 
-      if (_selectedPositions.isNotEmpty && !_selectedPositions.contains(p.position)) {
+      if (_selectedPositions.isNotEmpty &&
+          !_selectedPositions.contains(p.position)) {
         return false;
       }
 
-      if (_selectedAgeGroups.isNotEmpty && !_selectedAgeGroups.contains(p.ageGroup)) {
+      if (_selectedAgeGroups.isNotEmpty &&
+          !_selectedAgeGroups.contains(p.ageGroup)) {
         return false;
       }
 
@@ -83,6 +90,7 @@ class _PlayerBodyState extends State<PlayerBody> {
   }
 
   void _onPrevWindow() => setState(() => _windowStart -= kPlayerWindowSize);
+
   void _onNextWindow() => setState(() => _windowStart += kPlayerWindowSize);
 
   void _togglePosition(String pos) {
@@ -112,7 +120,7 @@ class _PlayerBodyState extends State<PlayerBody> {
   @override
   Widget build(BuildContext context) {
     if (widget.selectedIndex != null) {
-      return _PlayerDetailPage(player: allClubPlayers[widget.selectedIndex!]);
+      return PlayerDetailView(player: allClubPlayers[widget.selectedIndex!]);
     }
 
     final filtered = _filtered;
@@ -197,8 +205,9 @@ class _PlayerBodyState extends State<PlayerBody> {
                 else
                   LayoutBuilder(
                     builder: (context, constraints) {
-                      final crossAxisCount =
-                          (constraints.maxWidth / 220).floor().clamp(2, 6);
+                      final crossAxisCount = (constraints.maxWidth / 220)
+                          .floor()
+                          .clamp(2, 6);
                       return GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
@@ -284,7 +293,9 @@ class _FilterChip extends StatelessWidget {
           child: Text(
             label,
             style: YouthFieldTextStyle.smallButton.copyWith(
-              color: selected ? YouthFieldColor.white : YouthFieldColor.black800,
+              color: selected
+                  ? YouthFieldColor.white
+                  : YouthFieldColor.black800,
             ),
           ),
         ),
@@ -293,10 +304,10 @@ class _FilterChip extends StatelessWidget {
   }
 }
 
-class _PlayerDetailPage extends StatelessWidget {
+class PlayerDetailView extends StatelessWidget {
   final PlayerInfo player;
 
-  const _PlayerDetailPage({required this.player});
+  const PlayerDetailView({super.key, required this.player});
 
   @override
   Widget build(BuildContext context) {
@@ -317,10 +328,7 @@ class _PlayerDetailPage extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Text(
-                            player.name,
-                            style: YouthFieldTextStyle.body3,
-                          ),
+                          Text(player.name, style: YouthFieldTextStyle.body3),
                           const SizedBox(width: 10),
                           _PositionBadge(player.position),
                         ],
@@ -368,17 +376,18 @@ class _PlayerPhoto extends StatelessWidget {
       child: SizedBox(
         width: 320,
         height: 360,
-        child: imageUrl != null
-            ? _buildImage(imageUrl!)
-            : _placeholder(),
+        child: imageUrl != null ? _buildImage(imageUrl!) : _placeholder(),
       ),
     );
   }
 
   Widget _buildImage(String url) {
     if (url.startsWith('assets/')) {
-      return Image.asset(url, fit: BoxFit.cover,
-          errorBuilder: (_, __, ___) => _placeholder());
+      return Image.asset(
+        url,
+        fit: BoxFit.cover,
+        errorBuilder: (_, __, ___) => _placeholder(),
+      );
     }
     return CachedNetworkImage(
       imageUrl: 'https://images.weserv.nl/?url=${Uri.encodeComponent(url)}',
@@ -389,11 +398,11 @@ class _PlayerPhoto extends StatelessWidget {
   }
 
   Widget _placeholder() => Container(
-        color: YouthFieldColor.blue50,
-        child: const Center(
-          child: Icon(Icons.person, size: 80, color: YouthFieldColor.black300),
-        ),
-      );
+    color: YouthFieldColor.blue50,
+    child: const Center(
+      child: Icon(Icons.person, size: 80, color: YouthFieldColor.black300),
+    ),
+  );
 }
 
 class _PositionBadge extends StatelessWidget {
@@ -445,9 +454,7 @@ class _StatsTable extends StatelessWidget {
               ),
               children: [
                 const TableRow(
-                  decoration: BoxDecoration(
-                    color: YouthFieldColor.black50,
-                  ),
+                  decoration: BoxDecoration(color: YouthFieldColor.black50),
                   children: [
                     _TableCell(text: '출장', isHeader: true),
                     _TableCell(text: '골', isHeader: true),

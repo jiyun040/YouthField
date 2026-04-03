@@ -4,9 +4,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/auth/presentation/pages/profile_setup_page.dart';
+import 'package:youthfield/features/main/presentation/pages/main_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -40,9 +42,17 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       if (mounted) {
+        final prefs = await SharedPreferences.getInstance();
+        final hasProfile =
+            prefs.getString('user_name') != null &&
+            prefs.getString('user_type') != null;
+        if (!mounted) return;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const ProfileSetupPage()),
+          MaterialPageRoute(
+            builder: (_) =>
+                hasProfile ? const MainPage() : const ProfileSetupPage(),
+          ),
         );
       }
     } catch (e) {

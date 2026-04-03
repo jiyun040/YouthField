@@ -5,6 +5,7 @@ class RecentPlayer {
   final String position;
   final String ageGroup;
   final int number;
+  final String? imageUrl;
 
   const RecentPlayer({
     required this.name,
@@ -13,5 +14,6 @@ class RecentPlayer {
     required this.position,
     required this.ageGroup,
     required this.number,
+    this.imageUrl,
   });
 }

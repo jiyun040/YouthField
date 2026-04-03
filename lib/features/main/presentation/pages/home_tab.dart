@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:shimmer/shimmer.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/main/presentation/widgets/player_card.dart';
@@ -15,11 +16,7 @@ class HomeTab extends ConsumerStatefulWidget {
   final VoidCallback onScheduleMoreTap;
   final ValueChanged<String>? onPlayerTap;
 
-  const HomeTab({
-    super.key,
-    required this.onScheduleMoreTap,
-    this.onPlayerTap,
-  });
+  const HomeTab({super.key, required this.onScheduleMoreTap, this.onPlayerTap});
 
   @override
   ConsumerState<HomeTab> createState() => _HomeTabState();
@@ -59,7 +56,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    final eventsAsync = ref.watch(scheduleProvider).whenData((r) => r.toScheduleEvents());
+    final eventsAsync = ref
+        .watch(scheduleProvider)
+        .whenData((r) => r.toScheduleEvents());
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 32),
@@ -75,8 +74,10 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           spacing20,
           LayoutBuilder(
             builder: (context, constraints) {
-              final crossAxisCount =
-                  (constraints.maxWidth / 220).floor().clamp(2, 6);
+              final crossAxisCount = (constraints.maxWidth / 220).floor().clamp(
+                2,
+                6,
+              );
               return GridView.builder(
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
@@ -126,12 +127,23 @@ class _HomeTabState extends ConsumerState<HomeTab> {
           ),
           spacing20,
           eventsAsync.when(
-            loading: () => const SizedBox(
-              height: 60,
-              child: Center(
-                child: CircularProgressIndicator(
-                  color: YouthFieldColor.blue700,
-                  strokeWidth: 2,
+            loading: () => Shimmer.fromColors(
+              baseColor: const Color(0xFFE4E9F7),
+              highlightColor: YouthFieldColor.white,
+              child: Column(
+                children: List.generate(
+                  5,
+                  (_) => Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Container(
+                      height: 68,
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),

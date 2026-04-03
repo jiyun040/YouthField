@@ -13,7 +13,7 @@ class MypagePlayerCarousel extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text('최근 본 선수', style: YouthFieldTextStyle.body4),
+        Text('최근 찾아본 선수', style: YouthFieldTextStyle.body4),
         const SizedBox(height: 10),
         SingleChildScrollView(
           scrollDirection: Axis.horizontal,
