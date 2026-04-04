@@ -1,0 +1,426 @@
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:youthfield/core/constants/text_style.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:youthfield/core/providers/user_session_provider.dart';
+import 'package:material_symbols_icons/symbols.dart';
+import 'package:youthfield/core/constants/color.dart';
+import 'package:youthfield/core/providers/auth_provider.dart';
+import 'package:youthfield/core/widgets/login_required_dialog.dart';
+import 'package:youthfield/core/widgets/yf_app_bar.dart';
+import 'package:youthfield/core/widgets/yf_menu_bar.dart';
+import 'package:youthfield/features/auth/presentation/pages/login_page.dart';
+import 'package:youthfield/features/diary/presentation/providers/diary_provider.dart';
+import 'package:youthfield/features/mypage/presentation/pages/mypage_page.dart';
+import 'package:youthfield/features/mypage/presentation/providers/mypage_provider.dart';
+import 'package:youthfield/core/services/history_service.dart';
+import 'package:youthfield/features/mypage/domain/entities/recent_player.dart';
+import 'package:youthfield/features/schedule/presentation/providers/schedule_provider.dart';
+import 'package:youthfield/features/skill/presentation/providers/skill_provider.dart';
+import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
+import 'package:youthfield/features/diary/presentation/pages/diary_page.dart';
+import 'package:youthfield/features/schedule/presentation/pages/schedule_page.dart';
+import 'package:youthfield/features/player/data/clubs/all_clubs_data.dart';
+import 'package:youthfield/features/player/presentation/pages/player_body.dart';
+import '../pages/home_tab.dart';
+import '../pages/skill_tab.dart';
+import '../widgets/main_sub_header.dart';
+
+const _tabs = ['선수 정보', '스킬', '경기 / 연습 일지', '경기 일정'];
+const double _baseHeaderHeight = YFAppBar.barHeight + YFMenuBar.barHeight;
+const double _subHeaderHeight = 72;
+const double _tabHeaderHeight = _baseHeaderHeight + _subHeaderHeight;
+
+class MainPage extends ConsumerStatefulWidget {
+  const MainPage({super.key});
+
+  @override
+  ConsumerState<MainPage> createState() => _MainPageState();
+}
+
+class _MainPageState extends ConsumerState<MainPage> {
+  int _selectedTab = -1;
+
+  final _skillTabKey = GlobalKey<SkillTabState>();
+
+  int? _selectedPlayerIndex;
+
+  DiaryMode _diaryMode = DiaryMode.list;
+  DiaryEntry? _selectedDiaryEntry;
+  int _diaryCurrentPage = 0;
+  int _diaryWindowStart = 0;
+
+  List<DiaryEntry> get _diaryEntries => ref.read(diaryProvider);
+
+  int get _diaryTotalPages {
+    final n = _diaryEntries.length;
+    if (n == 0) return 1;
+    return (n / kDiaryPageSize).ceil();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSession();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(scheduleProvider);
+      ref.read(skillVideosProvider);
+    });
+  }
+
+  Future<void> _loadSession() async {
+    await ref.read(userSessionProvider.notifier).loadFromPrefs();
+    if (mounted) setState(() {});
+  }
+
+  double get _headerHeight {
+    if (_selectedTab == -1) return _baseHeaderHeight;
+    return _tabHeaderHeight;
+  }
+
+  Future<void> _openLogin() async {
+    final isLoggedIn = ref.read(authStateProvider).value != null;
+    if (isLoggedIn) {
+      showDialog(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          title: Text('이미 로그인됨', style: YouthFieldTextStyle.body4),
+          content: Text(
+            '이미 로그인된 상태입니다.',
+            style: YouthFieldTextStyle.smallButton.copyWith(
+              color: YouthFieldColor.black500,
+            ),
+          ),
+          actionsAlignment: MainAxisAlignment.center,
+          actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+          actions: [
+            TextButton(
+              style: TextButton.styleFrom(overlayColor: Colors.transparent),
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                '확인',
+                style: YouthFieldTextStyle.smallButton.copyWith(
+                  color: YouthFieldColor.blue700,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+      return;
+    }
+    await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(builder: (_) => const LoginPage()),
+    );
+  }
+
+  void _onTabSelected(int i) {
+    setState(() {
+      _selectedTab = i;
+      _selectedPlayerIndex = null;
+      if (i != 2) {
+        _diaryMode = DiaryMode.list;
+        _selectedDiaryEntry = null;
+        _diaryCurrentPage = 0;
+        _diaryWindowStart = 0;
+      }
+    });
+  }
+
+  void _onLogoTap() {
+    Navigator.popUntil(context, (route) => route.isFirst);
+    setState(() {
+      _selectedTab = -1;
+      _selectedPlayerIndex = null;
+    });
+  }
+
+  void _openMyPage() {
+    final isLoggedIn = ref.read(authStateProvider).value != null;
+    if (!isLoggedIn) {
+      _showLoginRequiredDialog();
+      return;
+    }
+    ref.invalidate(myProfileProvider);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            MypagePage(onDiaryMoreTap: () => setState(() => _selectedTab = 2)),
+      ),
+    );
+  }
+
+  void _showLoginRequiredDialog({String? message}) {
+    LoginRequiredDialog.show(
+      context: context,
+      subtitle: message,
+      onLogin: _openLogin,
+    );
+  }
+
+  void _showLogoutConfirmDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: YouthFieldColor.white,
+        title: Text('로그아웃', style: YouthFieldTextStyle.body4),
+        content: Text(
+          '로그아웃 하시겠습니까?',
+          style: YouthFieldTextStyle.smallButton.copyWith(
+            color: YouthFieldColor.black500,
+          ),
+        ),
+        actionsAlignment: MainAxisAlignment.center,
+        actionsPadding: const EdgeInsets.fromLTRB(24, 0, 24, 20),
+        actions: [
+          TextButton(
+            style: TextButton.styleFrom(overlayColor: Colors.transparent),
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(
+              '취소',
+              style: YouthFieldTextStyle.smallButton.copyWith(
+                color: YouthFieldColor.black500,
+              ),
+            ),
+          ),
+          const SizedBox(width: 20),
+          TextButton(
+            style: TextButton.styleFrom(overlayColor: Colors.transparent),
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await ref.read(userSessionProvider.notifier).clear();
+              await FirebaseAuth.instance.signOut();
+            },
+            child: Text(
+              '로그아웃',
+              style: YouthFieldTextStyle.smallButton.copyWith(
+                color: YouthFieldColor.blue700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onDiaryPageTap(int page) => setState(() {
+    _diaryCurrentPage = page;
+    _diaryWindowStart = (page ~/ kDiaryWindowSize) * kDiaryWindowSize;
+  });
+
+  void _onDiaryPrevWindow() =>
+      setState(() => _diaryWindowStart -= kDiaryWindowSize);
+
+  void _onDiaryNextWindow() =>
+      setState(() => _diaryWindowStart += kDiaryWindowSize);
+
+  void _onPlayerBack() {
+    setState(() {
+      if (_selectedPlayerIndex != null) {
+        _selectedPlayerIndex = null;
+      } else {
+        _selectedTab = -1;
+      }
+    });
+  }
+
+  void _onSkillBack() {
+    final handled = _skillTabKey.currentState?.handleBack() ?? false;
+    if (!handled) setState(() => _selectedTab = -1);
+  }
+
+  void _onDiaryBack() {
+    setState(() {
+      if (_diaryMode != DiaryMode.list) {
+        _diaryMode = DiaryMode.list;
+        _selectedDiaryEntry = null;
+      } else {
+        _selectedTab = -1;
+      }
+    });
+  }
+
+  void _onScheduleBack() {
+    setState(() => _selectedTab = -1);
+  }
+
+  void _saveRecentPlayer(int index) {
+    final p = allClubPlayers[index];
+    HistoryService.addRecentPlayer(
+      RecentPlayer(
+        name: p.name,
+        school: p.school,
+        location: p.location,
+        position: p.position,
+        ageGroup: p.ageGroup,
+        number: p.number,
+        imageUrl: p.imageUrl,
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: YouthFieldColor.background,
+      body: Stack(
+        children: [
+          Positioned.fill(
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SizedBox(height: _headerHeight),
+                  _buildBody(),
+                ],
+              ),
+            ),
+          ),
+          if (_selectedTab == 2 &&
+              _diaryMode == DiaryMode.list &&
+              _diaryTotalPages > 1)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: DiaryPaginationBar(
+                currentPage: _diaryCurrentPage,
+                totalPages: _diaryTotalPages,
+                windowStart: _diaryWindowStart,
+                onPageTap: _onDiaryPageTap,
+                onPrevWindow: _onDiaryPrevWindow,
+                onNextWindow: _onDiaryNextWindow,
+              ),
+            ),
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: ColoredBox(
+              color: YouthFieldColor.background,
+              child: _buildHeader(),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    final firebaseUser = ref.watch(authStateProvider).value;
+    final isLoggedIn = firebaseUser != null;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        YFAppBar(
+          isLoggedIn: isLoggedIn,
+          onLogin: _openLogin,
+          onLogout: () {
+            if (!isLoggedIn) {
+              _showLoginRequiredDialog(message: '로그인 후 로그아웃이 가능합니다.');
+              return;
+            }
+            _showLogoutConfirmDialog();
+          },
+          onLogoTap: _onLogoTap,
+          onProfileTap: _openMyPage,
+          profileImageBytes: isLoggedIn
+              ? ref.watch(userSessionProvider).profileImageBytes
+              : null,
+          profilePhotoUrl: isLoggedIn ? firebaseUser.photoURL : null,
+        ),
+        YFMenuBar(
+          tabs: _tabs,
+          selectedIndex: _selectedTab,
+          onTabSelected: _onTabSelected,
+        ),
+        if (_selectedTab == 0)
+          MainSubHeader(title: '선수 정보', onBack: _onPlayerBack),
+        if (_selectedTab == 1) MainSubHeader(title: '스킬', onBack: _onSkillBack),
+        if (_selectedTab == 2)
+          MainSubHeader(
+            title: '경기 / 연습 일지',
+            onBack: _onDiaryBack,
+            trailing: _diaryMode == DiaryMode.list
+                ? IconButton(
+                    icon: const Icon(
+                      Symbols.stylus_note,
+                      color: YouthFieldColor.blue700,
+                      size: 30,
+                    ),
+                    splashColor: Colors.transparent,
+                    highlightColor: Colors.transparent,
+                    hoverColor: Colors.transparent,
+                    onPressed: () {
+                      if (!isLoggedIn) {
+                        _showLoginRequiredDialog(
+                          message: '일지 작성은 로그인 후 이용할 수 있습니다.',
+                        );
+                        return;
+                      }
+                      setState(() => _diaryMode = DiaryMode.write);
+                    },
+                  )
+                : null,
+          ),
+        if (_selectedTab == 3)
+          MainSubHeader(title: '경기일정', onBack: _onScheduleBack),
+      ],
+    );
+  }
+
+  Widget _buildBody() {
+    switch (_selectedTab) {
+      case -1:
+        return HomeTab(
+          onScheduleMoreTap: () => setState(() => _selectedTab = 3),
+          onPlayerTap: (name) {
+            final index = allClubPlayers.indexWhere((p) => p.name == name);
+            if (index == -1) return;
+            _saveRecentPlayer(index);
+            setState(() {
+              _selectedTab = 0;
+              _selectedPlayerIndex = index;
+            });
+          },
+        );
+      case 0:
+        return PlayerBody(
+          selectedIndex: _selectedPlayerIndex,
+          onSelect: (i) {
+            _saveRecentPlayer(i);
+            setState(() => _selectedPlayerIndex = i);
+          },
+        );
+      case 1:
+        return SkillTab(key: _skillTabKey);
+      case 2:
+        return DiaryBody(
+          mode: _diaryMode,
+          entries: _diaryEntries,
+          currentPage: _diaryCurrentPage,
+          selectedEntry: _selectedDiaryEntry,
+          onEntryTap: (entry) => setState(() {
+            _selectedDiaryEntry = entry;
+            _diaryMode = DiaryMode.detail;
+          }),
+          onSave: (entry) => setState(() {
+            ref.read(diaryProvider.notifier).add(entry);
+            _diaryMode = DiaryMode.list;
+            _diaryCurrentPage = 0;
+            _diaryWindowStart = 0;
+          }),
+        );
+      case 3:
+        return const ScheduleBody();
+      default:
+        return const SizedBox.shrink();
+    }
+  }
+}
