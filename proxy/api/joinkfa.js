@@ -5,6 +5,9 @@ const JSON_HEADERS = {
   'Accept': 'application/json, text/plain, */*',
   'User-Agent':
     'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+  'Referer': 'https://www.joinkfa.com/portal/mat/matchList.do',
+  'Origin': 'https://www.joinkfa.com',
+  'X-Requested-With': 'XMLHttpRequest',
 };
 
 function fallbackImageUrl(path) {
@@ -30,10 +33,34 @@ function normalizeTeamName(value) {
     .replaceAll(/[\s\-_]/g, '');
 }
 
-async function postJson(path, body) {
+async function getSessionCookies() {
+  try {
+    const res = await fetch(`${BASE}/portal/mat/matchList.do`, {
+      headers: {
+        'User-Agent': JSON_HEADERS['User-Agent'],
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+    });
+    const raw = res.headers.get('set-cookie') || '';
+    const cookies = {};
+    for (const part of raw.split(/,(?=[^ ])/)) {
+      const kv = part.split(';')[0].trim();
+      const idx = kv.indexOf('=');
+      if (idx > 0) cookies[kv.slice(0, idx).trim()] = kv.slice(idx + 1).trim();
+    }
+    return Object.entries(cookies).map(([k, v]) => `${k}=${v}`).join('; ');
+  } catch {
+    return '';
+  }
+}
+
+async function postJson(path, body, cookieStr = '') {
+  const headers = { ...JSON_HEADERS };
+  if (cookieStr) headers['Cookie'] = cookieStr;
+
   const res = await fetch(`${BASE}${path}`, {
     method: 'POST',
-    headers: JSON_HEADERS,
+    headers,
     body: JSON.stringify(body),
   });
 
@@ -41,7 +68,26 @@ async function postJson(path, body) {
     throw new Error(`JoinKFA request failed: ${res.status} ${res.statusText}`);
   }
 
-  return res.json();
+  const newCookieRaw = res.headers.get('set-cookie') || '';
+  let merged = cookieStr;
+  if (newCookieRaw) {
+    const newCookies = {};
+    for (const part of newCookieRaw.split(/,(?=[^ ])/)) {
+      const kv = part.split(';')[0].trim();
+      const idx = kv.indexOf('=');
+      if (idx > 0) newCookies[kv.slice(0, idx).trim()] = kv.slice(idx + 1).trim();
+    }
+    const existing = {};
+    for (const part of cookieStr.split(';')) {
+      const kv = part.trim();
+      const idx = kv.indexOf('=');
+      if (idx > 0) existing[kv.slice(0, idx).trim()] = kv.slice(idx + 1).trim();
+    }
+    Object.assign(existing, newCookies);
+    merged = Object.entries(existing).map(([k, v]) => `${k}=${v}`).join('; ');
+  }
+
+  return { data: await res.json(), cookieStr: merged };
 }
 
 function buildDetailRequestXml({matchIdx, singleIdx}) {
@@ -95,14 +141,11 @@ async function fetchAnonymousDetail({matchIdx, singleIdx}) {
     /<Parameter id="ErrorMsg" type="string">([^<]*)<\/Parameter>/,
   );
 
-  const errorCode = errorCodeMatch?.[1] ?? null;
-  const errorMsg = errorMsgMatch?.[1] ?? null;
-
   return {
     status: res.status,
     ok: res.ok,
-    errorCode,
-    errorMsg,
+    errorCode: errorCodeMatch?.[1] ?? null,
+    errorMsg: errorMsgMatch?.[1] ?? null,
     rawXml: xml,
   };
 }
@@ -164,14 +207,15 @@ export default async function handler(req, res) {
   try {
     switch (mode) {
       case 'init': {
-        const data = await postJson('/portal/mat/getInitData1.do', {
+        const { data } = await postJson('/portal/mat/getInitData1.do', {
           v_ITEM_CD: itemCd,
         });
         return res.status(200).json(data);
       }
 
       case 'matchList': {
-        const data = await postJson('/portal/mat/getMatchList.do', {
+        const cookieStr = await getSessionCookies();
+        const { data } = await postJson('/portal/mat/getMatchList.do', {
           v_CURPAGENUM: String(page),
           v_ROWCOUNTPERPAGE: String(pageSize),
           v_ORDERBY: '',
@@ -184,17 +228,74 @@ export default async function handler(req, res) {
           v_TITLE: title,
           v_TEAMID: teamId,
           v_USER_ID: '',
-        });
+        }, cookieStr);
         return res.status(200).json(data);
+      }
+
+      case 'allCompetitions': {
+        const cookieStr = await getSessionCookies();
+
+        const gradeCombos = [
+          { style: 'LEAGUE2', mgcIdx: '2' },
+          { style: 'LEAGUE2', mgcIdx: '3' },
+          { style: 'MATCH',   mgcIdx: '52' },
+          { style: 'MATCH',   mgcIdx: '53' },
+        ];
+
+        const results = await Promise.allSettled(
+          gradeCombos.map(({ style: s, mgcIdx: g }) =>
+            postJson('/portal/mat/getMatchList.do', {
+              v_CURPAGENUM: '1',
+              v_ROWCOUNTPERPAGE: '200',
+              v_ORDERBY: '',
+              v_YEAR: year,
+              v_STYLE: s,
+              v_MGC_IDX: g,
+              v_AREACODE: '',
+              v_SIGUNGU_CODE: '',
+              v_ITEM_CD: itemCd,
+              v_TITLE: '',
+              v_TEAMID: '',
+              v_USER_ID: '',
+            }, cookieStr),
+          ),
+        );
+
+        const competitions = [];
+        for (let i = 0; i < gradeCombos.length; i++) {
+          const r = results[i];
+          if (r.status !== 'fulfilled') continue;
+          const matchList = r.value.data.matchList ?? [];
+          for (const match of matchList) {
+            competitions.push({
+              ...match,
+              _style: gradeCombos[i].style,
+              _mgcIdx: gradeCombos[i].mgcIdx,
+            });
+          }
+        }
+
+        return res.status(200).json({
+          year,
+          totalCount: competitions.length,
+          competitions,
+          _debug: results.map((r, i) => ({
+            ...gradeCombos[i],
+            status: r.status,
+            count: r.status === 'fulfilled' ? (r.value.data.matchList?.length ?? 0) : 0,
+            error: r.status === 'rejected' ? r.reason?.message : undefined,
+          })),
+        });
       }
 
       case 'matchInfo': {
         if (!matchIdx) {
           return res.status(400).json({error: 'matchIdx is required'});
         }
-        const data = await postJson('/portal/mat/getMatchInfo.do', {
+        const cookieStr = await getSessionCookies();
+        const { data } = await postJson('/portal/mat/getMatchInfo.do', {
           v_MATCH_IDX: matchIdx,
-        });
+        }, cookieStr);
         return res.status(200).json(data);
       }
 
@@ -204,7 +305,8 @@ export default async function handler(req, res) {
             .status(400)
             .json({error: 'matchIdx and yearMonth are required'});
         }
-        const data = await postJson('/portal/mat/getMatchSingleList.do', {
+        const cookieStr = await getSessionCookies();
+        const { data } = await postJson('/portal/mat/getMatchSingleList.do', {
           v_CURPAGENUM: String(page),
           v_ROWCOUNTPERPAGE: String(pageSize),
           v_ORDERBY: '',
@@ -212,7 +314,7 @@ export default async function handler(req, res) {
           v_YEAR_MONTH: yearMonth,
           v_TEAMID: teamId,
           v_USER_ID: '',
-        });
+        }, cookieStr);
         return res.status(200).json({
           ...data,
           singleList: (data.singleList ?? []).map(withEmblems),
@@ -223,9 +325,10 @@ export default async function handler(req, res) {
         if (!matchIdx) {
           return res.status(400).json({error: 'matchIdx is required'});
         }
-        const data = await postJson('/portal/mat/getApplyTeamList.do', {
+        const cookieStr = await getSessionCookies();
+        const { data } = await postJson('/portal/mat/getApplyTeamList.do', {
           v_MATCH_IDX: matchIdx,
-        });
+        }, cookieStr);
         return res.status(200).json({
           ...data,
           applyTeamList: (data.applyTeamList ?? []).map(withTeamEmblem),
@@ -238,11 +341,12 @@ export default async function handler(req, res) {
             .status(400)
             .json({error: 'matchIdx and teamId are required'});
         }
-        const data = await postJson('/portal/mat/getApplyPlayerList.do', {
+        const cookieStr = await getSessionCookies();
+        const { data } = await postJson('/portal/mat/getApplyPlayerList.do', {
           v_TEAMID: teamId,
           v_MATCH_IDX: matchIdx,
           v_MGC_TYPE: mgcType,
-        });
+        }, cookieStr);
         return res.status(200).json({
           ...data,
           applyPlayerList: (data.applyPlayerList ?? []).map(withPlayerPhoto),
@@ -255,6 +359,7 @@ export default async function handler(req, res) {
           .map((value) => value.trim())
           .filter(Boolean);
 
+        const cookieStr = await getSessionCookies();
         const emblemByTeam = {};
         const tournaments = [];
 
@@ -273,7 +378,7 @@ export default async function handler(req, res) {
               v_TITLE: '',
               v_TEAMID: '',
               v_USER_ID: '',
-            }),
+            }, cookieStr),
           ),
         );
 
@@ -281,7 +386,7 @@ export default async function handler(req, res) {
         for (let i = 0; i < gradeList.length; i++) {
           const gradeResult = gradeResults[i];
           if (gradeResult.status !== 'fulfilled') continue;
-          const matchList = gradeResult.value.matchList ?? [];
+          const matchList = gradeResult.value.data.matchList ?? [];
           for (const match of matchList.slice(0, 8)) {
             if (!allMatchIdxs.has(match.IDX)) {
               allMatchIdxs.add(match.IDX);
@@ -294,13 +399,13 @@ export default async function handler(req, res) {
           tournaments.map((t) =>
             postJson('/portal/mat/getApplyTeamList.do', {
               v_MATCH_IDX: t.matchIdx,
-            }),
+            }, cookieStr),
           ),
         );
 
         for (const result of teamResults) {
           if (result.status !== 'fulfilled') continue;
-          for (const team of result.value.applyTeamList ?? []) {
+          for (const team of result.value.data.applyTeamList ?? []) {
             const normalizedTeamName = normalizeTeamName(team.TEAMNAME);
             if (!normalizedTeamName) continue;
             const emblemUrl = resolveJoinKfaImage(team.EMBLEM, 'emblem');

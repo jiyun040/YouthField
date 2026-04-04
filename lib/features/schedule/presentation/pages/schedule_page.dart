@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
+import 'package:youthfield/features/schedule/data/models/joinkfa_models.dart';
 import 'package:youthfield/features/schedule/data/models/kleague_models.dart';
 import 'package:youthfield/features/schedule/domain/entities/schedule.dart';
+import 'package:youthfield/features/schedule/presentation/pages/joinkfa_competition_page.dart';
 import 'package:youthfield/features/schedule/presentation/pages/schedule_detail_page.dart';
 import 'package:youthfield/features/schedule/presentation/providers/schedule_provider.dart';
 import '../widgets/schedule_list_item.dart';
@@ -100,7 +102,7 @@ class _ScheduleList extends ConsumerWidget {
             children: [
               CircularProgressIndicator(color: YouthFieldColor.blue700),
               SizedBox(height: 16),
-              Text('K리그 유스 일정을 불러오는 중...'),
+              Text('일정을 불러오는 중...'),
             ],
           ),
         ),
@@ -142,8 +144,38 @@ class _ScheduleList extends ConsumerWidget {
       ),
       data: (feed) {
         final result = feed.kleague;
-        final leagues = result.leagues;
-        if (leagues.isEmpty) {
+        final kleagueLeagues = result.leagues;
+
+        final matchesByLeague = <int, List<ScheduleMatch>>{};
+        for (final m in result.matches) {
+          matchesByLeague
+              .putIfAbsent(m.leagueId, () => [])
+              .add(m.toEntity(emblemByTeam: feed.emblemByTeam));
+        }
+        for (final list in matchesByLeague.values) {
+          list.sort((a, b) => a.date.compareTo(b.date));
+        }
+
+        final kleagueHigh = kleagueLeagues.where((l) => l.leagueName.contains('고등')).toList();
+        final kleagueMid = kleagueLeagues.where((l) => l.leagueName.contains('중등')).toList();
+
+        final joinkfaHighLeagues = feed.joinkfaCompetitions
+            .where((c) => c.isLeague && c.gradeIdx == '3')
+            .toList();
+        final joinkfaMidLeagues = feed.joinkfaCompetitions
+            .where((c) => c.isLeague && c.gradeIdx == '2')
+            .toList();
+        final joinkfaHighTournaments = feed.joinkfaCompetitions
+            .where((c) => !c.isLeague && c.gradeIdx == '53')
+            .toList();
+        final joinkfaMidTournaments = feed.joinkfaCompetitions
+            .where((c) => !c.isLeague && c.gradeIdx == '52')
+            .toList();
+
+        final hasHigh = kleagueHigh.isNotEmpty || joinkfaHighLeagues.isNotEmpty || joinkfaHighTournaments.isNotEmpty;
+        final hasMid = kleagueMid.isNotEmpty || joinkfaMidLeagues.isNotEmpty || joinkfaMidTournaments.isNotEmpty;
+
+        if (!hasHigh && !hasMid) {
           return Padding(
             padding: const EdgeInsets.symmetric(vertical: 60),
             child: Center(
@@ -156,37 +188,53 @@ class _ScheduleList extends ConsumerWidget {
           );
         }
 
-        final matchesByLeague = <int, List<ScheduleMatch>>{};
-        for (final m in result.matches) {
-          matchesByLeague
-              .putIfAbsent(m.leagueId, () => [])
-              .add(m.toEntity(emblemByTeam: feed.emblemByTeam));
-        }
-
-        for (final list in matchesByLeague.values) {
-          list.sort((a, b) => a.date.compareTo(b.date));
-        }
-
-        final highSchool =
-            leagues.where((l) => l.leagueName.contains('고등')).toList();
-        final middleSchool =
-            leagues.where((l) => l.leagueName.contains('중등')).toList();
-
         return Padding(
           padding: const EdgeInsets.all(24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              if (highSchool.isNotEmpty) ...[
+              if (hasHigh) ...[
                 _sectionLabel('고등 (U18)'),
                 const SizedBox(height: 10),
-                ..._leagueItems(highSchool, matchesByLeague),
+                if (kleagueHigh.isNotEmpty) ...[
+                  _subLabel('K리그 유스 리그'),
+                  const SizedBox(height: 8),
+                  ..._kleagueItems(kleagueHigh, matchesByLeague, onSelectLeague),
+                  const SizedBox(height: 16),
+                ],
+                if (joinkfaHighLeagues.isNotEmpty) ...[
+                  _subLabel('전국 고등 리그'),
+                  const SizedBox(height: 8),
+                  ..._joinkfaItems(context, joinkfaHighLeagues),
+                  const SizedBox(height: 16),
+                ],
+                if (joinkfaHighTournaments.isNotEmpty) ...[
+                  _subLabel('고등 대회'),
+                  const SizedBox(height: 8),
+                  ..._joinkfaItems(context, joinkfaHighTournaments),
+                ],
                 const SizedBox(height: 24),
               ],
-              if (middleSchool.isNotEmpty) ...[
+              if (hasMid) ...[
                 _sectionLabel('중등 (U15)'),
                 const SizedBox(height: 10),
-                ..._leagueItems(middleSchool, matchesByLeague),
+                if (kleagueMid.isNotEmpty) ...[
+                  _subLabel('K리그 유스 리그'),
+                  const SizedBox(height: 8),
+                  ..._kleagueItems(kleagueMid, matchesByLeague, onSelectLeague),
+                  const SizedBox(height: 16),
+                ],
+                if (joinkfaMidLeagues.isNotEmpty) ...[
+                  _subLabel('전국 중등 리그'),
+                  const SizedBox(height: 8),
+                  ..._joinkfaItems(context, joinkfaMidLeagues),
+                  const SizedBox(height: 16),
+                ],
+                if (joinkfaMidTournaments.isNotEmpty) ...[
+                  _subLabel('중등 대회'),
+                  const SizedBox(height: 8),
+                  ..._joinkfaItems(context, joinkfaMidTournaments),
+                ],
               ],
               const SizedBox(height: 40),
             ],
@@ -206,9 +254,20 @@ class _ScheduleList extends ConsumerWidget {
     );
   }
 
-  List<Widget> _leagueItems(
+  Widget _subLabel(String text) {
+    return Text(
+      text,
+      style: YouthFieldTextStyle.placeholder.copyWith(
+        color: YouthFieldColor.black500,
+        fontWeight: FontWeight.w600,
+      ),
+    );
+  }
+
+  List<Widget> _kleagueItems(
     List<KleagueLeague> leagues,
     Map<int, List<ScheduleMatch>> matchesByLeague,
+    void Function(KleagueLeague, List<ScheduleMatch>) onSelectLeague,
   ) {
     return leagues.map((league) {
       final matches = matchesByLeague[league.leagueId] ?? [];
@@ -227,6 +286,31 @@ class _ScheduleList extends ConsumerWidget {
             matches: matches,
           ),
           onTap: () => onSelectLeague(league, matches),
+        ),
+      );
+    }).toList();
+  }
+
+  List<Widget> _joinkfaItems(
+    BuildContext context,
+    List<JoinKfaCompetition> competitions,
+  ) {
+    return competitions.map((comp) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 10),
+        child: ScheduleListItem(
+          event: ScheduleEvent(
+            title: comp.title,
+            dateRange: comp.dateRange,
+            venue: comp.areaName ?? '-',
+            matches: const [],
+          ),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => JoinkfaCompetitionPage(competition: comp),
+            ),
+          ),
         ),
       );
     }).toList();

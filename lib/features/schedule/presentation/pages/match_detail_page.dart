@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:material_symbols_icons/symbols.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/schedule/domain/entities/schedule.dart';
@@ -68,6 +69,13 @@ class MatchDetailPage extends StatelessWidget {
 class _DetailUnavailableNotice extends StatelessWidget {
   const _DetailUnavailableNotice();
 
+  Future<void> _openJoinKfa() async {
+    final uri = Uri.parse('https://www.joinkfa.com');
+    if (await canLaunchUrl(uri)) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -76,11 +84,51 @@ class _DetailUnavailableNotice extends StatelessWidget {
         color: YouthFieldColor.blue50,
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(
-        '공개 일정에서는 점수와 팀 정보까지만 제공되고, 선발/교체/경고 같은 세부 기록은 JoinKFA 로그인 권한이 필요한 경기에서는 표시되지 않을 수 있습니다.',
-        style: YouthFieldTextStyle.placeholder.copyWith(
-          color: YouthFieldColor.black500,
-        ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            '선발·교체·경고 등 세부 기록은 JoinKFA 로그인이 필요한 경기에서는 제공되지 않습니다.',
+            style: YouthFieldTextStyle.placeholder.copyWith(
+              color: YouthFieldColor.black500,
+            ),
+          ),
+          const SizedBox(height: 12),
+          GestureDetector(
+            onTap: _openJoinKfa,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: YouthFieldColor.blue700,
+                borderRadius: BorderRadius.circular(100),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'JoinKFA에서 보기',
+                    style: YouthFieldTextStyle.smallButton.copyWith(
+                      color: YouthFieldColor.white,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(
+                    Symbols.open_in_new,
+                    color: YouthFieldColor.white,
+                    size: 14,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '로그인 후 리그/대회 페이지에서 찾고싶은 리그 혹은 대회 명을 입력해주세요!',
+            style: YouthFieldTextStyle.placeholder.copyWith(
+              color: YouthFieldColor.black300,
+            ),
+          ),
+        ],
       ),
     );
   }
