@@ -36,4 +36,15 @@ class KleagueService {
     );
     return res.data ?? {};
   }
+
+  Future<Map<String, dynamic>> fetchMatchDetail({
+    required int leagueId,
+    required String matchNum,
+  }) async {
+    final res = await _dio.get<Map<String, dynamic>>(
+      '/api/match-detail',
+      queryParameters: {'leagueId': leagueId.toString(), 'matchNum': matchNum},
+    );
+    return res.data ?? {};
+  }
 }

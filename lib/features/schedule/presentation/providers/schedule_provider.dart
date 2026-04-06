@@ -34,3 +34,13 @@ final competitionMatchesProvider = FutureProvider.family<List<JoinKfaMatch>, (St
     );
   },
 );
+
+final matchDetailProvider = FutureProvider.family<Map<String, dynamic>, (int, String)>(
+  (ref, args) async {
+    final (leagueId, matchNum) = args;
+    return KleagueService.instance.fetchMatchDetail(
+      leagueId: leagueId,
+      matchNum: matchNum,
+    );
+  },
+);

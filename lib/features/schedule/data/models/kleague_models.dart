@@ -239,6 +239,7 @@ class KleagueLeague {
 
 class KleagueMatch {
   final int leagueId;
+  final String? matchNum;
   final String matchDate;
   final String matchTime;
   final String matchWeekday;
@@ -250,6 +251,7 @@ class KleagueMatch {
 
   const KleagueMatch({
     required this.leagueId,
+    this.matchNum,
     required this.matchDate,
     required this.matchTime,
     required this.matchWeekday,
@@ -263,6 +265,7 @@ class KleagueMatch {
   factory KleagueMatch.fromJson(Map<String, dynamic> json) {
     return KleagueMatch(
       leagueId: (json['leagueId'] as num?)?.toInt() ?? 0,
+      matchNum: json['matchNum'] as String?,
       matchDate: (json['matchDate'] as String?) ?? '',
       matchTime: (json['matchTime'] as String?) ?? '',
       matchWeekday: (json['matchWeekday'] as String?) ?? '',
@@ -297,6 +300,8 @@ class KleagueMatch {
       time: matchTime,
       venue: stadiumName,
       score: score,
+      leagueId: leagueId,
+      matchNum: matchNum,
     );
   }
 }
