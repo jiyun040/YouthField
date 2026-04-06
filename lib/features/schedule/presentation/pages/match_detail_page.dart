@@ -1,12 +1,25 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
 import 'package:youthfield/features/schedule/domain/entities/schedule.dart';
+import 'package:youthfield/features/schedule/presentation/providers/schedule_provider.dart';
 import 'package:youthfield/features/schedule/presentation/widgets/team_badge.dart';
 
-class MatchDetailPage extends StatelessWidget {
+PlayerRecord _toPlayerRecord(Map<String, dynamic> p) {
+  return PlayerRecord(
+    number: (p['number'] as num?)?.toInt() ?? 0,
+    position: (p['position'] as String?) ?? '',
+    name: (p['name'] as String?) ?? '',
+    goals: (p['goals'] as num?)?.toInt() ?? 0,
+    yellowCards: (p['yellowCard'] as bool? ?? false) ? 1 : 0,
+    redCard: p['redCard'] as bool? ?? false,
+  );
+}
+
+class MatchDetailPage extends ConsumerWidget {
   final ScheduleMatch match;
   final String eventTitle;
 
@@ -17,7 +30,12 @@ class MatchDetailPage extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final hasDetailIds = match.leagueId != null && match.matchNum != null;
+    final detailAsync = hasDetailIds
+        ? ref.watch(matchDetailProvider((match.leagueId!, match.matchNum!)))
+        : null;
+
     return Scaffold(
       backgroundColor: YouthFieldColor.background,
       body: SafeArea(
@@ -36,24 +54,63 @@ class MatchDetailPage extends StatelessWidget {
                       const SizedBox(height: 24),
                       _EventsSection(events: match.events),
                     ],
-                    if (match.homePlayers.isNotEmpty ||
-                        match.awayPlayers.isNotEmpty) ...[
-                      const SizedBox(height: 24),
+                    const SizedBox(height: 24),
+                    if (detailAsync != null)
+                      detailAsync.when(
+                        loading: () => const Center(
+                          child: Padding(
+                            padding: EdgeInsets.symmetric(vertical: 32),
+                            child: CircularProgressIndicator(),
+                          ),
+                        ),
+                        error: (_, __) => const _DetailUnavailableNotice(),
+                        data: (detail) {
+                          final homeLineup = (detail['homeLineup'] as List<dynamic>? ?? [])
+                              .cast<Map<String, dynamic>>()
+                              .map(_toPlayerRecord)
+                              .toList();
+                          final homeSubs = (detail['homeSubstitutes'] as List<dynamic>? ?? [])
+                              .cast<Map<String, dynamic>>()
+                              .map(_toPlayerRecord)
+                              .toList();
+                          final awayLineup = (detail['awayLineup'] as List<dynamic>? ?? [])
+                              .cast<Map<String, dynamic>>()
+                              .map(_toPlayerRecord)
+                              .toList();
+                          final awaySubs = (detail['awaySubstitutes'] as List<dynamic>? ?? [])
+                              .cast<Map<String, dynamic>>()
+                              .map(_toPlayerRecord)
+                              .toList();
+
+                          if (homeLineup.isEmpty && awayLineup.isEmpty) {
+                            return const _DetailUnavailableNotice();
+                          }
+
+                          return _LineupSection(
+                            homeTeam: match.homeTeam,
+                            awayTeam: match.awayTeam,
+                            homeTeamLogoUrl: match.homeTeamLogoUrl,
+                            awayTeamLogoUrl: match.awayTeamLogoUrl,
+                            homeStarters: homeLineup,
+                            homeSubs: homeSubs,
+                            awayStarters: awayLineup,
+                            awaySubs: awaySubs,
+                          );
+                        },
+                      )
+                    else if (match.homePlayers.isNotEmpty || match.awayPlayers.isNotEmpty)
                       _LineupSection(
                         homeTeam: match.homeTeam,
                         awayTeam: match.awayTeam,
                         homeTeamLogoUrl: match.homeTeamLogoUrl,
                         awayTeamLogoUrl: match.awayTeamLogoUrl,
-                        homePlayers: match.homePlayers,
-                        awayPlayers: match.awayPlayers,
-                      ),
-                    ],
-                    if (match.events.isEmpty &&
-                        match.homePlayers.isEmpty &&
-                        match.awayPlayers.isEmpty) ...[
-                      const SizedBox(height: 24),
+                        homeStarters: match.homePlayers,
+                        homeSubs: const [],
+                        awayStarters: match.awayPlayers,
+                        awaySubs: const [],
+                      )
+                    else
                       const _DetailUnavailableNotice(),
-                    ],
                     const SizedBox(height: 40),
                   ],
                 ),
@@ -459,16 +516,20 @@ class _LineupSection extends StatelessWidget {
   final String awayTeam;
   final String? homeTeamLogoUrl;
   final String? awayTeamLogoUrl;
-  final List<PlayerRecord> homePlayers;
-  final List<PlayerRecord> awayPlayers;
+  final List<PlayerRecord> homeStarters;
+  final List<PlayerRecord> homeSubs;
+  final List<PlayerRecord> awayStarters;
+  final List<PlayerRecord> awaySubs;
 
   const _LineupSection({
     required this.homeTeam,
     required this.awayTeam,
     this.homeTeamLogoUrl,
     this.awayTeamLogoUrl,
-    required this.homePlayers,
-    required this.awayPlayers,
+    required this.homeStarters,
+    required this.homeSubs,
+    required this.awayStarters,
+    required this.awaySubs,
   });
 
   @override
@@ -493,7 +554,8 @@ class _LineupSection extends StatelessWidget {
                     child: _TeamLineup(
                       teamName: homeTeam,
                       logoUrl: homeTeamLogoUrl,
-                      players: homePlayers,
+                      starters: homeStarters,
+                      subs: homeSubs,
                     ),
                   ),
                   const SizedBox(width: 20),
@@ -501,7 +563,8 @@ class _LineupSection extends StatelessWidget {
                     child: _TeamLineup(
                       teamName: awayTeam,
                       logoUrl: awayTeamLogoUrl,
-                      players: awayPlayers,
+                      starters: awayStarters,
+                      subs: awaySubs,
                     ),
                   ),
                 ],
@@ -512,13 +575,15 @@ class _LineupSection extends StatelessWidget {
                 _TeamLineup(
                   teamName: homeTeam,
                   logoUrl: homeTeamLogoUrl,
-                  players: homePlayers,
+                  starters: homeStarters,
+                  subs: homeSubs,
                 ),
                 const SizedBox(height: 20),
                 _TeamLineup(
                   teamName: awayTeam,
                   logoUrl: awayTeamLogoUrl,
-                  players: awayPlayers,
+                  starters: awayStarters,
+                  subs: awaySubs,
                 ),
               ],
             );
@@ -532,16 +597,72 @@ class _LineupSection extends StatelessWidget {
 class _TeamLineup extends StatelessWidget {
   final String teamName;
   final String? logoUrl;
-  final List<PlayerRecord> players;
+  final List<PlayerRecord> starters;
+  final List<PlayerRecord> subs;
 
   const _TeamLineup({
     required this.teamName,
     this.logoUrl,
-    required this.players,
+    required this.starters,
+    required this.subs,
   });
+
+  Widget _buildTable(List<PlayerRecord> players, {String? label}) {
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (label != null)
+            Container(
+              color: YouthFieldColor.black50,
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
+              child: Text(
+                label,
+                style: YouthFieldTextStyle.placeholder.copyWith(
+                  color: YouthFieldColor.black500,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          Container(
+            decoration: const BoxDecoration(color: YouthFieldColor.blue50),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: const Row(
+              children: [
+                _HeaderCell('배번', flex: 1),
+                _HeaderCell('포지션', flex: 2),
+                _HeaderCell('선수이름', flex: 3),
+                _HeaderCell('득점', flex: 1),
+                _HeaderCell('경고', flex: 1),
+                _HeaderCell('퇴장', flex: 1),
+              ],
+            ),
+          ),
+          ...players.map((p) {
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              child: Row(
+                children: [
+                  _DataCell('${p.number}', flex: 1),
+                  _DataCell(p.position, flex: 2),
+                  _DataCell(p.name, flex: 3, bold: true),
+                  _DataCell(p.goals > 0 ? '${p.goals}' : '-', flex: 1),
+                  _DataCell(p.yellowCards > 0 ? '${p.yellowCards}' : '-', flex: 1),
+                  _DataCell(p.redCard ? '1' : '-', flex: 1),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final allEmpty = starters.isEmpty && subs.isEmpty;
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -565,7 +686,7 @@ class _TeamLineup extends StatelessWidget {
             ],
           ),
         ),
-        if (players.isEmpty)
+        if (allEmpty)
           Container(
             padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
             decoration: BoxDecoration(
@@ -581,60 +702,12 @@ class _TeamLineup extends StatelessWidget {
               ),
             ),
           ),
-        if (players.isNotEmpty)
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Container(
-                  decoration: const BoxDecoration(
-                    color: YouthFieldColor.blue50,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: Row(
-                    children: const [
-                      _HeaderCell('배번', flex: 1),
-                      _HeaderCell('포지션', flex: 2),
-                      _HeaderCell('선수이름', flex: 3),
-                      _HeaderCell('득점', flex: 1),
-                      _HeaderCell('도움', flex: 1),
-                      _HeaderCell('경고', flex: 1),
-                      _HeaderCell('퇴장', flex: 1),
-                    ],
-                  ),
-                ),
-                ...players.map((p) {
-                  return Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 10,
-                    ),
-                    child: Row(
-                      children: [
-                        _DataCell('${p.number}', flex: 1),
-                        _DataCell(p.position, flex: 2),
-                        _DataCell(p.name, flex: 3, bold: true),
-                        _DataCell(p.goals > 0 ? '${p.goals}' : '-', flex: 1),
-                        _DataCell(
-                          p.assists > 0 ? '${p.assists}' : '-',
-                          flex: 1,
-                        ),
-                        _DataCell(
-                          p.yellowCards > 0 ? '${p.yellowCards}' : '-',
-                          flex: 1,
-                        ),
-                        _DataCell(p.redCard ? '1' : '-', flex: 1),
-                      ],
-                    ),
-                  );
-                }),
-              ],
-            ),
-          ),
+        if (starters.isNotEmpty)
+          _buildTable(starters, label: subs.isNotEmpty ? '선발' : null),
+        if (subs.isNotEmpty) ...[
+          const SizedBox(height: 8),
+          _buildTable(subs, label: '교체'),
+        ],
       ],
     );
   }

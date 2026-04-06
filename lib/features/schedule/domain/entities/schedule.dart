@@ -76,6 +76,10 @@ class ScheduleMatch {
 
   final List<PlayerRecord> awayPlayers;
 
+  final int? leagueId;
+
+  final String? matchNum;
+
   const ScheduleMatch({
     required this.homeTeam,
     required this.awayTeam,
@@ -90,6 +94,8 @@ class ScheduleMatch {
     this.events = const [],
     this.homePlayers = const [],
     this.awayPlayers = const [],
+    this.leagueId,
+    this.matchNum,
   });
 
   int get month =>
