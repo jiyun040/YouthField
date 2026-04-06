@@ -46,6 +46,15 @@ class _PlayerBodyState extends State<PlayerBody> {
     return value.toLowerCase().replaceAll(RegExp(r'\s+'), '');
   }
 
+  int _ageGroupOrder(String ageGroup) {
+    switch (ageGroup) {
+      case 'U-18': return 0;
+      case 'U-15': return 1;
+      case 'U-12': return 2;
+      default: return 3;
+    }
+  }
+
   List<({int originalIndex, PlayerInfo player})> get _filtered {
     final query = _normalizeSearchText(_searchQuery);
     final indexed = allClubPlayers
@@ -82,7 +91,12 @@ class _PlayerBodyState extends State<PlayerBody> {
       return true;
     }).toList();
 
-    result.sort((a, b) => a.player.name.compareTo(b.player.name));
+    result.sort((a, b) {
+      final ageOrder = _ageGroupOrder(a.player.ageGroup)
+          .compareTo(_ageGroupOrder(b.player.ageGroup));
+      if (ageOrder != 0) return ageOrder;
+      return a.player.name.compareTo(b.player.name);
+    });
     return result;
   }
 
