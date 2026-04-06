@@ -1,44 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
 
-const _kDiaryKey = 'diary_entries';
+const _kDiaryBox = 'diary';
+
+Box<String> get _box => Hive.box<String>(_kDiaryBox);
 
 class DiaryNotifier extends Notifier<List<DiaryEntry>> {
   @override
   List<DiaryEntry> build() {
-    Future.microtask(_load);
-    return [];
-  }
-
-  Future<void> _load() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getStringList(_kDiaryKey) ?? [];
-    final entries = raw
+    return _box.values
         .map(DiaryEntry.fromJsonString)
         .whereType<DiaryEntry>()
-        .toList();
-    if (entries.isNotEmpty) {
-      state = entries;
-    }
-  }
-
-  Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-      _kDiaryKey,
-      state.map((e) => e.toJsonString()).toList(),
-    );
+        .toList()
+      ..sort((a, b) => b.date.compareTo(a.date));
   }
 
   Future<void> add(DiaryEntry entry) async {
+    await _box.put(entry.id, entry.toJsonString());
     state = [entry, ...state];
-    await _save();
   }
 
   List<DiaryEntry> recent({int limit = 3}) {
-    final sorted = [...state]..sort((a, b) => b.date.compareTo(a.date));
-    return sorted.take(limit).toList();
+    return state.take(limit).toList();
   }
 }
 
