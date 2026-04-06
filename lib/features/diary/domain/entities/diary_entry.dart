@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class DiaryEntry {
 
   final String id;
@@ -26,6 +28,38 @@ class DiaryEntry {
     this.goodPoints = '',
     this.improvements = '',
   });
+
+  Map<String, dynamic> toJson() => {
+    'id': id,
+    'date': date.toIso8601String(),
+    'condition': condition,
+    'sleepStart': sleepStart,
+    'sleepEnd': sleepEnd,
+    'content': content,
+    'goodPoints': goodPoints,
+    'improvements': improvements,
+  };
+
+  String toJsonString() => jsonEncode(toJson());
+
+  factory DiaryEntry.fromJson(Map<String, dynamic> json) => DiaryEntry(
+    id: json['id'] as String,
+    date: DateTime.parse(json['date'] as String),
+    condition: (json['condition'] as num).toInt(),
+    sleepStart: json['sleepStart'] as String?,
+    sleepEnd: json['sleepEnd'] as String?,
+    content: json['content'] as String? ?? '',
+    goodPoints: json['goodPoints'] as String? ?? '',
+    improvements: json['improvements'] as String? ?? '',
+  );
+
+  static DiaryEntry? fromJsonString(String s) {
+    try {
+      return DiaryEntry.fromJson(jsonDecode(s) as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
 
   String get formattedDate {
     const weekdays = ['월', '화', '수', '목', '금', '토', '일'];

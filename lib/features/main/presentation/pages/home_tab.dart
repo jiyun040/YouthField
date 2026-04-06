@@ -37,7 +37,9 @@ class _HomeTabState extends ConsumerState<HomeTab> {
   List<PlayerInfo> _selectTopPlayers() {
     final rng = Random();
     List<PlayerInfo> pick(String pos, int count) {
-      final list = allClubPlayers.where((p) => p.position == pos).toList()
+      final list = allClubPlayers
+          .where((p) => p.position == pos && p.ageGroup != 'U-12')
+          .toList()
         ..shuffle(rng);
       return list.take(count).toList();
     }
