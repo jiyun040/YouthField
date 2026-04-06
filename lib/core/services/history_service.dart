@@ -1,21 +1,23 @@
 import 'dart:convert';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:youthfield/features/mypage/domain/entities/recent_player.dart';
 import 'package:youthfield/features/mypage/domain/entities/watched_skill.dart';
 
 class HistoryService {
+  static const _kHistoryBox = 'history';
   static const _skillsKey = 'history_watched_skills';
   static const _playersKey = 'history_recent_players';
   static const _maxItems = 50;
 
+  static Box<String> get _box => Hive.box<String>(_kHistoryBox);
+
   static Future<void> addWatchedSkill(WatchedSkill skill) async {
-    final prefs = await SharedPreferences.getInstance();
     final list = await getWatchedSkills();
     final filtered = list.where((s) => s.id != skill.id).toList();
     filtered.insert(0, skill);
     final trimmed = filtered.take(_maxItems).toList();
-    await prefs.setString(
+    await _box.put(
       _skillsKey,
       jsonEncode(
         trimmed
@@ -33,8 +35,7 @@ class HistoryService {
   }
 
   static Future<List<WatchedSkill>> getWatchedSkills() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_skillsKey);
+    final raw = _box.get(_skillsKey);
     if (raw == null) return [];
     try {
       final list = jsonDecode(raw) as List;
@@ -54,12 +55,11 @@ class HistoryService {
   }
 
   static Future<void> addRecentPlayer(RecentPlayer player) async {
-    final prefs = await SharedPreferences.getInstance();
     final list = await getRecentPlayers();
     final filtered = list.where((p) => p.name != player.name).toList();
     filtered.insert(0, player);
     final trimmed = filtered.take(_maxItems).toList();
-    await prefs.setString(
+    await _box.put(
       _playersKey,
       jsonEncode(
         trimmed
@@ -80,8 +80,7 @@ class HistoryService {
   }
 
   static Future<List<RecentPlayer>> getRecentPlayers() async {
-    final prefs = await SharedPreferences.getInstance();
-    final raw = prefs.getString(_playersKey);
+    final raw = _box.get(_playersKey);
     if (raw == null) return [];
     try {
       final list = jsonDecode(raw) as List;

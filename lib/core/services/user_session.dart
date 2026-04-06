@@ -1,11 +1,18 @@
-import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:youthfield/features/mypage/domain/entities/user_type.dart';
 
 class UserSession {
-  static const _profileImageKey = 'user_profile_image_base64';
+  static const _kUserSessionBox = 'user_session';
+  static const _nameKey = 'user_name';
+  static const _typeKey = 'user_type';
+  static const _profileImageKey = 'user_profile_image_bytes';
+  static const _staffRoleKey = 'user_staff_role';
+  static const _teamKey = 'user_team';
+  static const _positionKey = 'user_position';
+  static const _birthdateKey = 'user_birthdate';
+  static const _resolveKey = 'user_resolve';
   static final UserSession _instance = UserSession._internal();
 
   factory UserSession() => _instance;
@@ -23,16 +30,17 @@ class UserSession {
 
   bool get hasData => name != null && userType != null;
 
+  Box<dynamic> get _box => Hive.box<dynamic>(_kUserSessionBox);
+
   Future<void> loadFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    name = prefs.getString('user_name');
-    profileImageBytes = _decodeProfileImage(prefs.getString(_profileImageKey));
-    staffRole = prefs.getString('user_staff_role');
-    team = prefs.getString('user_team');
-    position = prefs.getString('user_position');
-    birthdate = prefs.getString('user_birthdate');
-    resolve = prefs.getString('user_resolve');
-    final typeStr = prefs.getString('user_type');
+    name = _box.get(_nameKey) as String?;
+    profileImageBytes = _box.get(_profileImageKey) as Uint8List?;
+    staffRole = _box.get(_staffRoleKey) as String?;
+    team = _box.get(_teamKey) as String?;
+    position = _box.get(_positionKey) as String?;
+    birthdate = _box.get(_birthdateKey) as String?;
+    resolve = _box.get(_resolveKey) as String?;
+    final typeStr = _box.get(_typeKey) as String?;
     if (typeStr != null) {
       userType = UserType.values.firstWhere(
         (e) => e.name == typeStr,
@@ -81,19 +89,38 @@ class UserSession {
     String? birthdate,
     String? resolve,
   }) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('user_name', name);
-    await prefs.setString('user_type', userType.name);
+    await _box.put(_nameKey, name);
+    await _box.put(_typeKey, userType.name);
     if (profileImageBytes != null) {
-      await prefs.setString(_profileImageKey, base64Encode(profileImageBytes));
+      await _box.put(_profileImageKey, profileImageBytes);
     } else {
-      await prefs.remove(_profileImageKey);
+      await _box.delete(_profileImageKey);
     }
-    if (staffRole != null) await prefs.setString('user_staff_role', staffRole);
-    if (team != null) await prefs.setString('user_team', team);
-    if (position != null) await prefs.setString('user_position', position);
-    if (birthdate != null) await prefs.setString('user_birthdate', birthdate);
-    if (resolve != null) await prefs.setString('user_resolve', resolve);
+    if (staffRole != null) {
+      await _box.put(_staffRoleKey, staffRole);
+    } else {
+      await _box.delete(_staffRoleKey);
+    }
+    if (team != null) {
+      await _box.put(_teamKey, team);
+    } else {
+      await _box.delete(_teamKey);
+    }
+    if (position != null) {
+      await _box.put(_positionKey, position);
+    } else {
+      await _box.delete(_positionKey);
+    }
+    if (birthdate != null) {
+      await _box.put(_birthdateKey, birthdate);
+    } else {
+      await _box.delete(_birthdateKey);
+    }
+    if (resolve != null) {
+      await _box.put(_resolveKey, resolve);
+    } else {
+      await _box.delete(_resolveKey);
+    }
   }
 
   Future<void> clear() async {
@@ -105,22 +132,17 @@ class UserSession {
     position = null;
     birthdate = null;
     resolve = null;
-    final prefs = await SharedPreferences.getInstance();
     for (final key in [
-      'user_name', 'user_type', 'user_staff_role',
-      'user_team', 'user_position', 'user_birthdate', 'user_resolve',
+      _nameKey,
+      _typeKey,
+      _staffRoleKey,
+      _teamKey,
+      _positionKey,
+      _birthdateKey,
+      _resolveKey,
       _profileImageKey,
     ]) {
-      await prefs.remove(key);
-    }
-  }
-
-  Uint8List? _decodeProfileImage(String? encodedImage) {
-    if (encodedImage == null || encodedImage.isEmpty) return null;
-    try {
-      return base64Decode(encodedImage);
-    } catch (_) {
-      return null;
+      await _box.delete(key);
     }
   }
 }
