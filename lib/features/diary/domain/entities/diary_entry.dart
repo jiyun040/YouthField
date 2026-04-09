@@ -4,6 +4,8 @@ class DiaryEntry {
 
   final String id;
 
+  final String userId;
+
   final DateTime date;
 
   final int condition;
@@ -20,6 +22,7 @@ class DiaryEntry {
 
   const DiaryEntry({
     required this.id,
+    required this.userId,
     required this.date,
     required this.condition,
     this.sleepStart,
@@ -31,6 +34,7 @@ class DiaryEntry {
 
   Map<String, dynamic> toJson() => {
     'id': id,
+    'userId': userId,
     'date': date.toIso8601String(),
     'condition': condition,
     'sleepStart': sleepStart,
@@ -44,6 +48,7 @@ class DiaryEntry {
 
   factory DiaryEntry.fromJson(Map<String, dynamic> json) => DiaryEntry(
     id: json['id'] as String,
+    userId: json['userId'] as String? ?? '',
     date: DateTime.parse(json['date'] as String),
     condition: (json['condition'] as num).toInt(),
     sleepStart: json['sleepStart'] as String?,

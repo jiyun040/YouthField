@@ -1,23 +1,24 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
-import 'package:hive_flutter/hive_flutter.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
+import 'package:youthfield/core/providers/user_session_provider.dart';
 import 'package:youthfield/features/auth/presentation/pages/profile_setup_page.dart';
 import 'package:youthfield/features/main/presentation/pages/main_page.dart';
 
-class LoginPage extends StatefulWidget {
+class LoginPage extends ConsumerStatefulWidget {
   const LoginPage({super.key});
 
   @override
-  State<LoginPage> createState() => _LoginPageState();
+  ConsumerState<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends State<LoginPage> {
+class _LoginPageState extends ConsumerState<LoginPage> {
   bool _isLoading = false;
 
   Future<void> _signInWithGoogle() async {
@@ -42,11 +43,9 @@ class _LoginPageState extends State<LoginPage> {
       }
 
       if (mounted) {
-        final prefs = Hive.box<dynamic>('user_session');
-        final hasProfile =
-            (prefs.get('user_name') as String?) != null &&
-            (prefs.get('user_type') as String?) != null;
+        await ref.read(userSessionProvider.notifier).loadFromPrefs();
         if (!mounted) return;
+        final hasProfile = ref.read(userSessionProvider).hasData;
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(

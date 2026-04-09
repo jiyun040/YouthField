@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:youthfield/core/widgets/yf_time_picker.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
@@ -8,7 +9,7 @@ import 'package:youthfield/features/diary/presentation/widgets/diary_submit_butt
 import 'package:youthfield/features/diary/presentation/widgets/diary_text_field.dart';
 
 class DiaryWriteView extends StatefulWidget {
-  final ValueChanged<DiaryEntry> onSave;
+  final Future<void> Function(DiaryEntry) onSave;
 
   const DiaryWriteView({super.key, required this.onSave});
 
@@ -54,9 +55,13 @@ class _DiaryWriteViewState extends State<DiaryWriteView> {
     }
   }
 
-  void _handleSave() {
+  Future<void> _handleSave() async {
+    final userId = FirebaseAuth.instance.currentUser?.uid;
+    if (userId == null) return;
+
     final entry = DiaryEntry(
       id: DateTime.now().millisecondsSinceEpoch.toString(),
+      userId: userId,
       date: DateTime.now(),
       condition: _condition.round(),
       sleepStart: _sleepStart,
@@ -65,7 +70,7 @@ class _DiaryWriteViewState extends State<DiaryWriteView> {
       goodPoints: _goodController.text.trim(),
       improvements: _improvController.text.trim(),
     );
-    widget.onSave(entry);
+    await widget.onSave(entry);
   }
 
   @override

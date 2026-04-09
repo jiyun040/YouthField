@@ -410,12 +410,16 @@ class _MainPageState extends ConsumerState<MainPage> {
             _selectedDiaryEntry = entry;
             _diaryMode = DiaryMode.detail;
           }),
-          onSave: (entry) => setState(() {
-            ref.read(diaryProvider.notifier).add(entry);
-            _diaryMode = DiaryMode.list;
-            _diaryCurrentPage = 0;
-            _diaryWindowStart = 0;
-          }),
+          onSave: (entry) async {
+            await ref.read(diaryProvider.notifier).add(entry);
+            if (mounted) {
+              setState(() {
+                _diaryMode = DiaryMode.list;
+                _diaryCurrentPage = 0;
+                _diaryWindowStart = 0;
+              });
+            }
+          },
         );
       case 3:
         return const ScheduleBody();

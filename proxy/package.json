@@ -2,5 +2,8 @@
   "name": "youthfield-proxy",
   "version": "1.0.0",
   "description": "K League Youth Schedule Proxy for YouthField Flutter App",
-  "private": true
+  "private": true,
+  "dependencies": {
+    "vercel": "^50.42.0"
+  }
 }

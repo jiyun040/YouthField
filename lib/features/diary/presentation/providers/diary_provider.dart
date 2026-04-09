@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:youthfield/features/diary/domain/entities/diary_entry.dart';
@@ -9,9 +10,13 @@ Box<String> get _box => Hive.box<String>(_kDiaryBox);
 class DiaryNotifier extends Notifier<List<DiaryEntry>> {
   @override
   List<DiaryEntry> build() {
+    final currentUserId = FirebaseAuth.instance.currentUser?.uid;
+    if (currentUserId == null) return [];
+
     return _box.values
         .map(DiaryEntry.fromJsonString)
         .whereType<DiaryEntry>()
+        .where((entry) => entry.userId == currentUserId)
         .toList()
       ..sort((a, b) => b.date.compareTo(a.date));
   }

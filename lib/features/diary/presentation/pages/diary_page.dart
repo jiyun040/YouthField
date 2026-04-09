@@ -15,7 +15,7 @@ class DiaryBody extends StatelessWidget {
   final DiaryMode mode;
   final DiaryEntry? selectedEntry;
   final ValueChanged<DiaryEntry> onEntryTap;
-  final ValueChanged<DiaryEntry> onSave;
+  final Future<void> Function(DiaryEntry) onSave;
   final List<DiaryEntry> entries;
   final int currentPage;
 
