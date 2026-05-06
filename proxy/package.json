@@ -4,6 +4,7 @@
   "description": "K League Youth Schedule Proxy for YouthField Flutter App",
   "private": true,
   "dependencies": {
+    "@vercel/kv": "^0.2.4",
     "vercel": "^50.42.0"
   }
 }

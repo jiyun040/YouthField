@@ -1,5 +1,9 @@
+import { kv } from '@vercel/kv';
+
 const BASE = 'https://www.joinkfa.com';
 const FILE_BASE = 'https://files.joinkfa.com';
+const CACHE_TTL = 3600; // 1시간
+
 const JSON_HEADERS = {
   'Content-Type': 'application/json; charset=UTF-8',
   'Accept': 'application/json, text/plain, */*',
@@ -175,6 +179,19 @@ function withPlayerPhoto(player) {
   };
 }
 
+// 캐싱 helper
+async function cacheAndRespond(res, statusCode, data, cacheKey) {
+  if (cacheKey) {
+    try {
+      const cacheData = { ...data, _cached: false, _timestamp: new Date().toISOString() };
+      await kv.setex(cacheKey, CACHE_TTL, cacheData);
+    } catch (err) {
+      console.warn('[joinkfa cache] write failed:', err.message);
+    }
+  }
+  return res.status(statusCode).json({ ...data, _cached: false, _timestamp: new Date().toISOString() });
+}
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
@@ -202,9 +219,32 @@ export default async function handler(req, res) {
     grades = '2,3',
     page = '1',
     pageSize = '1000',
+    noCache,
   } = req.query;
 
   try {
+    // 캐시 가능한 mode 목록 (읽기 전용)
+    const cacheableModes = ['allCompetitions', 'teamEmblems', 'singleList'];
+    const shouldCache = cacheableModes.includes(mode) && !noCache;
+
+    // 캐시 키 생성
+    let cacheKey = null;
+    if (shouldCache) {
+      const params = [mode, year, style, mgcIdx, grades, matchIdx, yearMonth, teamId].filter(Boolean).join(':');
+      cacheKey = `joinkfa:${params}`;
+
+      try {
+        const cached = await kv.get(cacheKey);
+        if (cached) {
+          return res.status(200).json({ ...cached, _cached: true, _timestamp: new Date().toISOString() });
+        }
+      } catch (cacheErr) {
+        console.warn('[joinkfa cache] read failed:', cacheErr.message);
+      }
+    }
+
+    let result;
+
     switch (mode) {
       case 'init': {
         const { data } = await postJson('/portal/mat/getInitData1.do', {
@@ -275,7 +315,7 @@ export default async function handler(req, res) {
           }
         }
 
-        return res.status(200).json({
+        const data = {
           year,
           totalCount: competitions.length,
           competitions,
@@ -285,7 +325,8 @@ export default async function handler(req, res) {
             count: r.status === 'fulfilled' ? (r.value.data.matchList?.length ?? 0) : 0,
             error: r.status === 'rejected' ? r.reason?.message : undefined,
           })),
-        });
+        };
+        return cacheAndRespond(res, 200, data, cacheKey);
       }
 
       case 'matchInfo': {
@@ -315,10 +356,11 @@ export default async function handler(req, res) {
           v_TEAMID: teamId,
           v_USER_ID: '',
         }, cookieStr);
-        return res.status(200).json({
+        const responseData = {
           ...data,
           singleList: (data.singleList ?? []).map(withEmblems),
-        });
+        };
+        return cacheAndRespond(res, 200, responseData, cacheKey);
       }
 
       case 'applyTeams': {
@@ -430,14 +472,15 @@ export default async function handler(req, res) {
           }
         }
 
-        return res.status(200).json({
+        const data = {
           year,
           style,
           grades: gradeList,
           tournamentCount: tournaments.length,
           teamCount: Object.keys(emblemByTeam).length,
           emblemByTeam,
-        });
+        };
+        return cacheAndRespond(res, 200, data, cacheKey);
       }
 
       case 'detail': {

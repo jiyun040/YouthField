@@ -1,5 +1,8 @@
+import { kv } from '@vercel/kv';
+
 const BASE = 'https://www.kleague.com';
 const STYLE = 'LEAGUE2';
+const CACHE_TTL = 3600; // 1시간
 
 async function getSessionCookies() {
   const res = await fetch(`${BASE}/youth/junior.do`, {
@@ -67,9 +70,24 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { year = '2026' } = req.query;
+  const { year = '2026', noCache } = req.query;
 
   try {
+    // 캐시 키
+    const cacheKey = `schedule:kleague:${year}`;
+
+    // 캐시에서 먼저 확인
+    if (!noCache) {
+      try {
+        const cached = await kv.get(cacheKey);
+        if (cached) {
+          return res.status(200).json({ ...cached, _cached: true, _timestamp: new Date().toISOString() });
+        }
+      } catch (cacheErr) {
+        console.warn('[schedule cache] read failed:', cacheErr.message);
+        // 캐시 실패해도 계속 진행
+      }
+    }
 
     let cookieStr = await getSessionCookies();
 
@@ -118,12 +136,23 @@ export default async function handler(req, res) {
 
     const mergedSchedules = Object.values(allSchedules).flat();
 
-    return res.status(200).json({
+    const result = {
       leagueNameList: leagues,
       scheduleList: mergedSchedules,
-
       _sampleMatch: mergedSchedules[0] ?? null,
-    });
+      _cached: false,
+      _timestamp: new Date().toISOString(),
+    };
+
+    // 캐시에 저장
+    try {
+      await kv.setex(cacheKey, CACHE_TTL, result);
+    } catch (cacheErr) {
+      console.warn('[schedule cache] write failed:', cacheErr.message);
+      // 캐시 실패해도 결과는 반환
+    }
+
+    return res.status(200).json(result);
 
   } catch (err) {
     console.error('[schedule proxy]', err);

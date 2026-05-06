@@ -1,4 +1,7 @@
+import { kv } from '@vercel/kv';
+
 const BASE = 'https://www.kleague.com';
+const CACHE_TTL = 7200; // 2시간 (경기 결과는 자주 안 바뀜)
 
 async function getSessionCookies() {
   const res = await fetch(`${BASE}/youth/junior.do`, {
@@ -180,13 +183,26 @@ export default async function handler(req, res) {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
 
-  const { leagueId, matchNum, debug } = req.query;
+  const { leagueId, matchNum, debug, noCache } = req.query;
 
   if (!leagueId || !matchNum) {
     return res.status(400).json({ error: 'leagueId and matchNum are required' });
   }
 
+  const cacheKey = `match-detail:${leagueId}:${matchNum}`;
+
   try {
+    // 캐시 확인
+    if (!noCache && !debug) {
+      try {
+        const cached = await kv.get(cacheKey);
+        if (cached) {
+          return res.status(200).json({ ...cached, _cached: true, _timestamp: new Date().toISOString() });
+        }
+      } catch (cacheErr) {
+        console.warn('[match-detail cache] read failed:', cacheErr.message);
+      }
+    }
     const cookieStr = await getSessionCookies();
 
     const jsonRes = await fetch(`${BASE}/youth/junior/matchResultChange.do`, {
@@ -234,7 +250,18 @@ export default async function handler(req, res) {
     }
 
     const parsed = parseMatchHtml(html);
-    return res.status(200).json({ source: 'html', leagueId, matchNum, ...parsed, _htmlLen: html.length });
+    const result = { source: 'html', leagueId, matchNum, ...parsed, _htmlLen: html.length, _cached: false, _timestamp: new Date().toISOString() };
+
+    // 캐시 저장
+    if (!debug) {
+      try {
+        await kv.setex(cacheKey, CACHE_TTL, result);
+      } catch (cacheErr) {
+        console.warn('[match-detail cache] write failed:', cacheErr.message);
+      }
+    }
+
+    return res.status(200).json(result);
 
   } catch (err) {
     console.error('[match-detail proxy]', err);
