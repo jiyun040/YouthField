@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -25,36 +26,78 @@ class _LoginPageState extends State<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
+      UserCredential credential;
       if (kIsWeb) {
         final provider = GoogleAuthProvider()
           ..setCustomParameters({'prompt': 'select_account'});
-        await FirebaseAuth.instance.signInWithPopup(provider);
+        credential = await FirebaseAuth.instance.signInWithPopup(provider);
       } else {
         final googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) return;
 
         final googleAuth = await googleUser.authentication;
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        await FirebaseAuth.instance.signInWithCredential(credential);
-      }
-
-      if (mounted) {
-        final prefs = Hive.box<dynamic>('user_session');
-        final hasProfile =
-            (prefs.get('user_name') as String?) != null &&
-            (prefs.get('user_type') as String?) != null;
-        if (!mounted) return;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                hasProfile ? const MainPage() : const ProfileSetupPage(),
+        credential = await FirebaseAuth.instance.signInWithCredential(
+          GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
           ),
         );
       }
+
+      if (!mounted) return;
+
+      final user = credential.user;
+      if (user == null) return;
+
+      final prefs = Hive.box<dynamic>('user_session');
+
+      // 로그인 timestamp 기록
+      await prefs.put('login_timestamp', DateTime.now().toIso8601String());
+
+      final hasLocalProfile =
+          (prefs.get('user_name') as String?) != null &&
+          (prefs.get('user_type') as String?) != null;
+
+      bool hasProfile = hasLocalProfile;
+
+      // 로컬에 프로필 없으면 Firestore에서 복원 시도
+      if (!hasProfile) {
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+          if (doc.exists) {
+            final data = doc.data()!;
+            final name = data['name'] as String?;
+            final userType = data['userType'] as String?;
+            if (name != null && userType != null) {
+              await prefs.put('user_name', name);
+              await prefs.put('user_type', userType);
+              final staffRole = data['staffRole'] as String?;
+              final team = data['team'] as String?;
+              final position = data['position'] as String?;
+              final birthdate = data['birthdate'] as String?;
+              final resolve = data['resolve'] as String?;
+              if (staffRole != null) await prefs.put('user_staff_role', staffRole);
+              if (team != null) await prefs.put('user_team', team);
+              if (position != null) await prefs.put('user_position', position);
+              if (birthdate != null) await prefs.put('user_birthdate', birthdate);
+              if (resolve != null) await prefs.put('user_resolve', resolve);
+              hasProfile = true;
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              hasProfile ? const MainPage() : const ProfileSetupPage(),
+        ),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
