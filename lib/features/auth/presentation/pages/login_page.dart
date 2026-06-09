@@ -1,24 +1,24 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:material_symbols_icons/symbols.dart';
 import 'package:youthfield/core/constants/color.dart';
 import 'package:youthfield/core/constants/text_style.dart';
-import 'package:youthfield/core/providers/user_session_provider.dart';
 import 'package:youthfield/features/auth/presentation/pages/profile_setup_page.dart';
 import 'package:youthfield/features/main/presentation/pages/main_page.dart';
 
-class LoginPage extends ConsumerStatefulWidget {
+class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
   @override
-  ConsumerState<LoginPage> createState() => _LoginPageState();
+  State<LoginPage> createState() => _LoginPageState();
 }
 
-class _LoginPageState extends ConsumerState<LoginPage> {
+class _LoginPageState extends State<LoginPage> {
   bool _isLoading = false;
 
   Future<void> _signInWithGoogle() async {
@@ -26,34 +26,78 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     setState(() => _isLoading = true);
 
     try {
+      UserCredential credential;
       if (kIsWeb) {
         final provider = GoogleAuthProvider()
           ..setCustomParameters({'prompt': 'select_account'});
-        await FirebaseAuth.instance.signInWithPopup(provider);
+        credential = await FirebaseAuth.instance.signInWithPopup(provider);
       } else {
         final googleUser = await GoogleSignIn().signIn();
         if (googleUser == null) return;
 
         final googleAuth = await googleUser.authentication;
-        final credential = GoogleAuthProvider.credential(
-          accessToken: googleAuth.accessToken,
-          idToken: googleAuth.idToken,
-        );
-        await FirebaseAuth.instance.signInWithCredential(credential);
-      }
-
-      if (mounted) {
-        await ref.read(userSessionProvider.notifier).loadFromPrefs();
-        if (!mounted) return;
-        final hasProfile = ref.read(userSessionProvider).hasData;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (_) =>
-                hasProfile ? const MainPage() : const ProfileSetupPage(),
+        credential = await FirebaseAuth.instance.signInWithCredential(
+          GoogleAuthProvider.credential(
+            accessToken: googleAuth.accessToken,
+            idToken: googleAuth.idToken,
           ),
         );
       }
+
+      if (!mounted) return;
+
+      final user = credential.user;
+      if (user == null) return;
+
+      final prefs = Hive.box<dynamic>('user_session');
+
+      // 로그인 timestamp 기록
+      await prefs.put('login_timestamp', DateTime.now().toIso8601String());
+
+      final hasLocalProfile =
+          (prefs.get('user_name') as String?) != null &&
+          (prefs.get('user_type') as String?) != null;
+
+      bool hasProfile = hasLocalProfile;
+
+      // 로컬에 프로필 없으면 Firestore에서 복원 시도
+      if (!hasProfile) {
+        try {
+          final doc = await FirebaseFirestore.instance
+              .collection('users')
+              .doc(user.uid)
+              .get();
+          if (doc.exists) {
+            final data = doc.data()!;
+            final name = data['name'] as String?;
+            final userType = data['userType'] as String?;
+            if (name != null && userType != null) {
+              await prefs.put('user_name', name);
+              await prefs.put('user_type', userType);
+              final staffRole = data['staffRole'] as String?;
+              final team = data['team'] as String?;
+              final position = data['position'] as String?;
+              final birthdate = data['birthdate'] as String?;
+              final resolve = data['resolve'] as String?;
+              if (staffRole != null) await prefs.put('user_staff_role', staffRole);
+              if (team != null) await prefs.put('user_team', team);
+              if (position != null) await prefs.put('user_position', position);
+              if (birthdate != null) await prefs.put('user_birthdate', birthdate);
+              if (resolve != null) await prefs.put('user_resolve', resolve);
+              hasProfile = true;
+            }
+          }
+        } catch (_) {}
+      }
+
+      if (!mounted) return;
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) =>
+              hasProfile ? const MainPage() : const ProfileSetupPage(),
+        ),
+      );
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
