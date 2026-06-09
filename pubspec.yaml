@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   cupertino_icons: ^1.0.8
-  material_symbols_icons: ^4.2782.0
+  material_symbols_icons: ^4.2928.1
   flutter_svg: ^2.0.10
   url_launcher: ^6.3.0
   google_sign_in: ^6.2.1
